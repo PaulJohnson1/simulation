@@ -8,10 +8,11 @@ struct tmp_renderer;
 struct tmp_simulation
 {
     struct tmp_spatial_hash grid;
-    uint64_t current_id;
     struct tmp_ball *balls;
     struct tmp_ball *balls_end;
     struct tmp_ball *balls_cap;
+    struct tmp_spatial_hash_entity grid_entities[TMP_BALL_COUNT];
+    uint64_t current_id;
 };
 
 extern void tmp_simulation_init(struct tmp_simulation *);

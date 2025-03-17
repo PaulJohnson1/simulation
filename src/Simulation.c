@@ -19,6 +19,7 @@ void tmp_simulation_init(struct tmp_simulation *s)
     s->current_id = 1;
     tmp_vector_grow(struct tmp_ball, s->balls);
     s->balls_end++;
+    // s->grid_entities = malloc(sizeof *s->grid_entities * TMP_BALL_COUNT);
     tmp_spatial_hash_init(&s->grid);
 
     // struct tmp_ball *a = tmp_simulation_ball_init(s);
@@ -34,7 +35,7 @@ void tmp_simulation_init(struct tmp_simulation *s)
     // tmp_spatial_hash_insert(&s->grid, a);
     // tmp_spatial_hash_insert(&s->grid, b);
 
-    for (uint64_t i = 0; i < TMP_BALL_COUNT; i++)
+    for (uint64_t i = 1; i < TMP_BALL_COUNT; i++)
         tmp_spatial_hash_insert(&s->grid, tmp_simulation_ball_init(s));
 }
 
@@ -72,7 +73,8 @@ void tmp_simulation_tick(struct tmp_simulation *s, float dt)
             tmp_ball_apply_gravity(i);
 
         for (struct tmp_ball *i = s->balls + 1; i < s->balls_end; i++)
-            tmp_spatial_hash_update(&s->grid, i);
+            tmp_spatial_hash_entity_from_ball(s->grid_entities + i->id, i);
+        tmp_spatial_hash_update_multiple(&s->grid, TMP_BALL_COUNT, s->grid_entities);
         tmp_spatial_hash_find_possible_collisions(&s->grid, s, collide_balls);
 
         for (struct tmp_ball *i = s->balls + 1; i < s->balls_end; i++)

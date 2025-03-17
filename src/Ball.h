@@ -12,7 +12,6 @@ struct tmp_ball
     struct tmp_vector position;
     struct tmp_vector last_position;
     struct tmp_vector acceleration;
-    uint64_t current_shg_cell;
     uint32_t id;
 };
 

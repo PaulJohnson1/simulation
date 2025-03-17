@@ -1,15 +1,14 @@
 #include <Ball.h>
 
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 
+#include <Renderer/Renderer.h>
 #include <Simulation.h>
 #include <Utilities.h>
-#include <Renderer/Renderer.h>
 
 void tmp_ball_apply_gravity(struct tmp_ball *b)
 {
-    // b->acceleration.y += .01;
     static uint64_t r = 1;
     r ^= r >> 12;
     r ^= r << 25;
@@ -22,33 +21,32 @@ void tmp_ball_apply_gravity(struct tmp_ball *b)
 
 void tmp_ball_apply_constraints(struct tmp_ball *b)
 {
-    b->position.x = tmp_clamp(b->position.x, TMP_BALL_RADIUS, TMP_MAP_SIZE - TMP_BALL_RADIUS);
-    b->position.y = tmp_clamp(b->position.y, TMP_BALL_RADIUS, TMP_MAP_SIZE - TMP_BALL_RADIUS);
+    b->position.x = tmp_clamp(b->position.x, TMP_BALL_RADIUS,
+                              TMP_MAP_SIZE - TMP_BALL_RADIUS);
+    b->position.y = tmp_clamp(b->position.y, TMP_BALL_RADIUS,
+                              TMP_MAP_SIZE - TMP_BALL_RADIUS);
 }
 
-void tmp_ball_apply_collision(struct tmp_ball *restrict a, struct tmp_ball *restrict b)
+void tmp_ball_apply_collision(struct tmp_ball *restrict a,
+                              struct tmp_ball *restrict b)
 {
-    float delta_x = b->position.x - a->position.x;
-    float delta_y = b->position.y - a->position.y;
-    float d2 = delta_x * delta_x + delta_y * delta_y;
-    float collision_radius = TMP_BALL_RADIUS * 2;
-    float collision_radius_sq = collision_radius * collision_radius;
+    const float dx = b->position.x - a->position.x;
+    const float dy = b->position.y - a->position.y;
+    const float d2 = dx * dx + dy * dy;
+    const float min_distance = TMP_BALL_RADIUS * 2.0f;
+    const float min_distance_sq = min_distance * min_distance;
 
-    if (d2 < collision_radius_sq && d2 > 0.1f)
+    if (d2 < min_distance_sq && d2 > 0.1f)
     {
-        float d = sqrtf(d2);
+        const float inv_d = tmp_fast_inverse_root(d2);
+        const float normal_scale = -0.01f + (1.0f / inv_d - min_distance) * 0.5f;
+        const float nx = dx * inv_d;
+        const float ny = dy * inv_d;
 
-        float normal_x = delta_x / d + 0.1f;
-        float normal_y = delta_y / d + 0.1f;
-
-        float delta = 0.5f * (d - collision_radius);
-        float move_x = normal_x * delta;
-        float move_y = normal_y * delta;
-
-        a->position.x += move_x;
-        a->position.y += move_y;
-        b->position.x -= move_x;
-        b->position.y -= move_y;
+        a->position.x += nx * normal_scale;
+        a->position.y += ny * normal_scale;
+        b->position.x -= nx * normal_scale;
+        b->position.y -= ny * normal_scale;
     }
 }
 
@@ -79,6 +77,7 @@ void tmp_ball_render(struct tmp_ball *b, struct tmp_renderer *r)
     tmp_renderer_arc(r, b->position.x, b->position.y, TMP_BALL_RADIUS);
     tmp_renderer_fill(r);
 #else
-    tmp_renderer_circle(r, b->position.x, b->position.y, TMP_BALL_RADIUS);
+    if (b->id % 5 == 0)
+        tmp_renderer_circle(r, b->position.x, b->position.y, TMP_BALL_RADIUS);
 #endif
 }

@@ -30,7 +30,7 @@ endif()
 
 set(CMAKE_C_COMPILER "gcc")
 if(DEBUG_BUILD)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gdwarf-4")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
 else()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -ffast-math -DNDEBUG -mtune=native -march=native")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -ffast-math -DNDEBUG -mtune=native -march=native")
