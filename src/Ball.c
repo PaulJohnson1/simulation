@@ -3,7 +3,8 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include <Renderer/Renderer.h>
+#include <GL/gl.h>
+
 #include <Simulation.h>
 #include <Utilities.h>
 
@@ -70,14 +71,28 @@ void tmp_ball_tick_verlet(struct tmp_ball *b, float dt)
     b->acceleration.y = 0;
 }
 
-void tmp_ball_render(struct tmp_ball *b, struct tmp_renderer *r)
+static void draw_circle(float x, float y, float radius)
 {
-#ifdef WASM_BUILD
-    tmp_renderer_begin_path(r);
-    tmp_renderer_arc(r, b->position.x, b->position.y, TMP_BALL_RADIUS);
-    tmp_renderer_fill(r);
-#else
-    if (b->id % 5 == 0)
-        tmp_renderer_circle(r, b->position.x, b->position.y, TMP_BALL_RADIUS);
-#endif
+    printf("draw_circle %f %f %f\n", x, y, radius);
+    const int segments = 16;
+    glEnable(GL_LINE_SMOOTH);
+    glBegin(GL_TRIANGLE_FAN);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    for (int i = 0; i < segments; i++)
+    {
+        float theta = 2.0f * M_PI * (float)i / (float)segments;
+        float dx = tmp_get_random_cos(theta) * radius;
+        float dy = tmp_get_random_sin(theta) * radius;
+        glVertex2f(x + dx, y + dy);
+    }
+    glEnd();
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_BLEND);
+}
+
+void tmp_ball_render(struct tmp_ball *b)
+{
+    glColor3f(1.0f, 0.5f, 0.5f);
+    draw_circle(0,0, 0.1);
 }

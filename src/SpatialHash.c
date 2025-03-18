@@ -1,7 +1,6 @@
 #include <SpatialHash.h>
 
 #include <Ball.h>
-#include <Bitset.h>
 #include <Simulation.h>
 #include <signal.h>
 #include <string.h>

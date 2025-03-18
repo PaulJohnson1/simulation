@@ -1,12 +1,10 @@
 #pragma once
 
-struct tmp_renderer;
 struct tmp_simulation;
 struct tmp_input_data;
 
 struct tmp_window
 {
-    struct tmp_renderer *renderer;
     struct tmp_simulation *simulation;
     struct tmp_input_data *input_data;
 };

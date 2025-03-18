@@ -9,7 +9,6 @@
 #include <pthread.h>
 
 #include <Ball.h>
-#include <Renderer/Renderer.h>
 #include <Const.h>
 
 void tmp_simulation_init(struct tmp_simulation *s)
@@ -93,11 +92,15 @@ void tmp_simulation_tick(struct tmp_simulation *s, float dt)
     printf("average subtick %lu.%lu mspt\n", average_time / 1000, average_time % 1000);
 }
 
-void tmp_simulation_render(struct tmp_simulation *s, struct tmp_renderer *r)
+void tmp_simulation_render(struct tmp_simulation *s)
 {
-    // tmp_renderer_begin_path(r);
-    // tmp_renderer_rect(r, 0, 0, 400, 400);
-    // tmp_renderer_fill(r);
+    struct timeval start;
+    struct timeval end;
+    gettimeofday(&start, NULL);
     for (struct tmp_ball *i = s->balls + 1; i < s->balls_end; i++)
-        tmp_ball_render(i, r);
+        tmp_ball_render(i);
+    gettimeofday(&end, NULL);
+    uint64_t elapsed_time = ((end.tv_sec - start.tv_sec) * 1000000 +
+                             (end.tv_usec - start.tv_usec));
+    printf("render %lu.%lu ms\n", elapsed_time / 1000, elapsed_time % 1000);
 }
