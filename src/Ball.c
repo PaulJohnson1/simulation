@@ -73,7 +73,6 @@ void tmp_ball_tick_verlet(struct tmp_ball *b, float dt)
 
 static void draw_circle(float x, float y, float radius)
 {
-    printf("draw_circle %f %f %f\n", x, y, radius);
     const int segments = 16;
     glEnable(GL_LINE_SMOOTH);
     glBegin(GL_TRIANGLE_FAN);
@@ -93,6 +92,6 @@ static void draw_circle(float x, float y, float radius)
 
 void tmp_ball_render(struct tmp_ball *b)
 {
-    glColor3f(1.0f, 0.5f, 0.5f);
-    draw_circle(0,0, 0.1);
+    glColor3f(0.5f, 0.5f, 0.5f);
+    draw_circle(b->position.x, b->position.y, TMP_BALL_RADIUS);
 }

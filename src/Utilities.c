@@ -37,6 +37,7 @@ float tmp_fast_inverse_root(float x)
 static float sin_table[TRIG_LOOKUP_SIZE];
 static float cos_table[TRIG_LOOKUP_SIZE];
 
+__attribute__((constructor))
 void tmp_init_lookup_tables()
 {
     for (uint64_t i = 0; i < TRIG_LOOKUP_SIZE; i++)
