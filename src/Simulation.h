@@ -10,7 +10,6 @@ struct tmp_simulation
     struct tmp_ball *balls;
     struct tmp_ball *balls_end;
     struct tmp_ball *balls_cap;
-    struct tmp_spatial_hash_entity grid_entities[TMP_BALL_COUNT];
     uint64_t current_id;
 };
 

@@ -21,8 +21,6 @@ void tmp_spatial_hash_init(struct tmp_spatial_hash *g)
     memset(g, 0, sizeof *g);
     g->references = calloc(ll_size, sizeof *g->references);
     g->references_size = 1;
-    memset(g->current_entity_cells, 0, sizeof g->current_entity_cells);
-    memset(g->cells, 0, sizeof g->cells);
 }
 
 static uint64_t create_reference(struct tmp_spatial_hash *g)
@@ -45,29 +43,34 @@ void tmp_spatial_hash_insert(struct tmp_spatial_hash *g, struct tmp_ball *b)
     uint16_t y = tmp_clamp((int16_t)b->position.y, 0, TMP_MAP_SIZE - 1) /
                  TMP_SPATIAL_HASH_GRID_SIZE;
     uint64_t hash = HASH_FUNCTION(x, y);
-    g->current_entity_cells[b->id] = hash;
+    g->entities.old_hash[b->id] = hash;
     uint32_t i = create_reference(g);
     g->references[i].data = b->id;
     g->references[i].next = g->cells[hash];
     g->cells[hash] = i;
 }
 
-static void update_implementation(struct tmp_spatial_hash *g,
-                                  struct tmp_spatial_hash_entity entity)
+static void update_implementation(struct tmp_spatial_hash *g, uint32_t index)
 {
-    uint64_t new_hash = HASH_FUNCTION(entity.x, entity.y);
-    uint64_t old_hash = g->current_entity_cells[entity.id];
+    uint16_t *restrict xs = g->entities.x;
+    uint16_t *restrict ys = g->entities.y;
+    uint64_t *restrict old_hashes = g->entities.old_hash;
+
+    uint64_t new_hash = HASH_FUNCTION(xs[index], ys[index]);
+    uint64_t old_hash = old_hashes[index];
     if (new_hash == old_hash)
         return;
- 
-    g->current_entity_cells[entity.id] = new_hash;
+
+    int16_t id = g->entities.id[index];
+
+    old_hashes[index] = new_hash;
 
     // delete
     uint64_t current = g->cells[old_hash];
     uint64_t prev = 0;
     while (current != 0)
     {
-        if (g->references[current].data == entity.id)
+        if (g->references[current].data == id)
         {
             if (prev == 0)
                 g->cells[old_hash] = g->references[current].next;
@@ -82,34 +85,33 @@ static void update_implementation(struct tmp_spatial_hash *g,
 
     // insert
     // can reuse the same linked list element
-    g->references[current].data = entity.id;
+    g->references[current].data = id;
     g->references[current].next = g->cells[new_hash];
     g->cells[new_hash] = current;
 }
 
-void tmp_spatial_hash_entity_from_ball(struct tmp_spatial_hash_entity *e,
-                                       struct tmp_ball *b)
+void tmp_spatial_hash_construct_entities(struct tmp_spatial_hash *g,
+                                         uint64_t count, struct tmp_ball *balls)
 {
-    e->id = b->id;
-    e->x = tmp_clamp((int16_t)b->position.x, 0, TMP_MAP_SIZE - 1) /
-           TMP_SPATIAL_HASH_GRID_SIZE;
-    e->y = tmp_clamp((int16_t)b->position.y, 0, TMP_MAP_SIZE - 1) /
-           TMP_SPATIAL_HASH_GRID_SIZE;
+    uint16_t *restrict xs = g->entities.x;
+    uint16_t *restrict ys = g->entities.y;
+    uint64_t *restrict old_hashes = g->entities.old_hash;
+    uint32_t *restrict ids = g->entities.id;
+
+    for (int i = 0; i < count; i++)
+        ids[i] = balls[i].id;
+    for (int i = 0; i < count; i++)
+        xs[i] = tmp_clamp((int16_t)balls[i].position.x, 0, TMP_MAP_SIZE - 1) /
+                TMP_SPATIAL_HASH_GRID_SIZE;
+    for (int i = 0; i < count; i++)
+        ys = tmp_clamp((int16_t)balls[i].position.y, 0, TMP_MAP_SIZE - 1) /
+             TMP_SPATIAL_HASH_GRID_SIZE;
 }
 
-void tmp_spatial_hash_update(struct tmp_spatial_hash *g, struct tmp_ball *b)
+void tmp_spatial_hash_update_multiple(struct tmp_spatial_hash *g)
 {
-    struct tmp_spatial_hash_entity entity;
-    tmp_spatial_hash_entity_from_ball(&entity, b);
-    update_implementation(g, entity);
-}
-
-void tmp_spatial_hash_update_multiple(struct tmp_spatial_hash *g, uint64_t size,
-                                      struct tmp_spatial_hash_entity *begin)
-{
-    struct tmp_spatial_hash_entity *end = begin + size;
-    for (struct tmp_spatial_hash_entity *i = begin; i < end; i++)
-        update_implementation(g, *i);
+    for (int i = 0; i < TMP_BALL_COUNT; i++)
+        update_implementation(g, i);
 }
 
 static void print_grid(struct tmp_spatial_hash *g)
