@@ -10,6 +10,8 @@
 
 void tmp_ball_apply_gravity(struct tmp_ball *b)
 {
+    // b->acceleration.y -= 0.1f;
+
     static uint64_t r = 1;
     r ^= r >> 12;
     r ^= r << 25;

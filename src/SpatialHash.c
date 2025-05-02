@@ -21,8 +21,6 @@ void tmp_spatial_hash_init(struct tmp_spatial_hash *g)
     memset(g, 0, sizeof *g);
     g->references = calloc(ll_size, sizeof *g->references);
     g->references_size = 1;
-    memset(g->current_entity_cells, 0, sizeof g->current_entity_cells);
-    memset(g->cells, 0, sizeof g->cells);
 }
 
 static uint64_t create_reference(struct tmp_spatial_hash *g)
@@ -38,7 +36,8 @@ static uint64_t create_reference(struct tmp_spatial_hash *g)
 }
 
 // uniform
-void tmp_spatial_hash_insert(struct tmp_spatial_hash *g, struct tmp_ball *b)
+void tmp_spatial_hash_insert(struct tmp_spatial_hash *g,
+                             struct tmp_ball const *b)
 {
     uint16_t x = tmp_clamp((int16_t)b->position.x, 0, TMP_MAP_SIZE - 1) /
                  TMP_SPATIAL_HASH_GRID_SIZE;
@@ -53,13 +52,13 @@ void tmp_spatial_hash_insert(struct tmp_spatial_hash *g, struct tmp_ball *b)
 }
 
 static void update_implementation(struct tmp_spatial_hash *g,
-                                  struct tmp_spatial_hash_entity entity)
+                                  struct tmp_spatial_hash_entity const entity)
 {
     uint64_t new_hash = HASH_FUNCTION(entity.x, entity.y);
     uint64_t old_hash = g->current_entity_cells[entity.id];
     if (new_hash == old_hash)
         return;
- 
+
     g->current_entity_cells[entity.id] = new_hash;
 
     // delete
@@ -88,7 +87,7 @@ static void update_implementation(struct tmp_spatial_hash *g,
 }
 
 void tmp_spatial_hash_entity_from_ball(struct tmp_spatial_hash_entity *e,
-                                       struct tmp_ball *b)
+                                       struct tmp_ball const *b)
 {
     e->id = b->id;
     e->x = tmp_clamp((int16_t)b->position.x, 0, TMP_MAP_SIZE - 1) /
@@ -97,25 +96,27 @@ void tmp_spatial_hash_entity_from_ball(struct tmp_spatial_hash_entity *e,
            TMP_SPATIAL_HASH_GRID_SIZE;
 }
 
-void tmp_spatial_hash_update(struct tmp_spatial_hash *g, struct tmp_ball *b)
+void tmp_spatial_hash_update(struct tmp_spatial_hash *g,
+                             struct tmp_ball const *b)
 {
     struct tmp_spatial_hash_entity entity;
     tmp_spatial_hash_entity_from_ball(&entity, b);
     update_implementation(g, entity);
 }
 
-void tmp_spatial_hash_update_multiple(struct tmp_spatial_hash *g, uint64_t size,
-                                      struct tmp_spatial_hash_entity *begin)
+void tmp_spatial_hash_update_multiple(
+    struct tmp_spatial_hash *g, uint64_t size,
+    struct tmp_spatial_hash_entity const *begin)
 {
-    struct tmp_spatial_hash_entity *end = begin + size;
-    for (struct tmp_spatial_hash_entity *i = begin; i < end; i++)
+    struct tmp_spatial_hash_entity const *end = begin + size;
+    for (struct tmp_spatial_hash_entity const *i = begin; i < end; i++)
         update_implementation(g, *i);
 }
 
-static void print_grid(struct tmp_spatial_hash *g)
+static void print_grid(struct tmp_spatial_hash const *g)
 {
-    uint32_t *end = g->cells + TMP_SPATIAL_HASH_CELL_COUNT;
-    for (uint32_t *cell = g->cells; cell < end; cell++)
+    uint32_t const *end = g->cells + TMP_SPATIAL_HASH_CELL_COUNT;
+    for (uint32_t const *cell = g->cells; cell < end; cell++)
     {
         if (!*cell)
             continue;
@@ -130,13 +131,13 @@ void tmp_spatial_hash_optimize(struct tmp_spatial_hash *g)
 {
     struct reference *new_refs = calloc(ll_size, sizeof *new_refs);
 
-    uint32_t *end = g->cells + TMP_SPATIAL_HASH_CELL_COUNT;
+    uint32_t const *end = g->cells + TMP_SPATIAL_HASH_CELL_COUNT;
     uint64_t i = 1;
     for (uint32_t *cell = g->cells; cell < end; cell++)
     {
         if (!*cell)
             continue;
-        uint32_t entity_i = *cell;
+        uint32_t const entity_i = *cell;
         *cell = i;
 
         for (uint32_t j = entity_i; j; j = g->references[j].next)
@@ -154,8 +155,8 @@ void tmp_spatial_hash_optimize(struct tmp_spatial_hash *g)
 }
 
 void tmp_spatial_hash_find_possible_collisions_single(
-    struct tmp_spatial_hash *g, void *captures,
-    void (*cb)(uint64_t, uint64_t, void *))
+    struct tmp_spatial_hash const *g, void const *captures,
+    void (*cb)(uint64_t, uint64_t, void const *))
 {
 #define search(h)                                                              \
     do                                                                         \
@@ -165,15 +166,15 @@ void tmp_spatial_hash_find_possible_collisions_single(
             cb(id_a, g->references[j].data, captures);                         \
     } while (0)
 
-    uint64_t end = TMP_SPATIAL_HASH_CELL_COUNT_AXIS;
+    uint64_t const end = TMP_SPATIAL_HASH_CELL_COUNT_AXIS;
     for (uint64_t y = 0; y < end; y++)
         for (uint64_t x = 0; x < end; x++)
         {
-            uint64_t hash = HASH_FUNCTION(x, y);
-            uint32_t cell = g->cells[hash];
+            uint64_t const hash = HASH_FUNCTION(x, y);
+            uint32_t const cell = g->cells[hash];
             for (uint32_t i = cell; i; i = g->references[i].next)
             {
-                uint64_t id_a = g->references[i].data;
+                uint64_t const id_a = g->references[i].data;
 
                 // middle
                 for (uint32_t j = g->references[i].next; j;

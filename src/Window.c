@@ -12,6 +12,9 @@ void tmp_window_init(struct tmp_window *w) {}
 void tmp_window_tick(struct tmp_window *w, float delta)
 {
     tmp_simulation_tick(w->simulation, 1);
+#ifdef NRENDER
+    return;
+#endif
 
     glPushMatrix();
     glLoadIdentity();
