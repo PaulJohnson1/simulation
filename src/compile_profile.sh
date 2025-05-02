@@ -1,0 +1,1 @@
+clang Main.c -I. -lSDL3 -lm -lGL -O3 -DNDEBUG -DNRENDER -gdwarf-4 -fno-inline-functions
