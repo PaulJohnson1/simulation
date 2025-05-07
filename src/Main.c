@@ -22,7 +22,7 @@ int main()
     feenableexcept(FE_INVALID | FE_DIVBYZERO);
 #endif
     static struct tmp_window window = {0};
-    struct tmp_simulation *simulation = malloc(sizeof *simulation);
+    struct tmp_simulation *simulation = (struct tmp_simulation *)malloc(sizeof *simulation);
 
     tmp_window_init(&window);
     tmp_simulation_init(simulation);

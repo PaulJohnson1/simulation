@@ -15,7 +15,7 @@ struct tmp_simulation
 };
 
 extern void tmp_simulation_init(struct tmp_simulation *);
-struct tmp_ball *tmp_simulation_ball_init(struct tmp_simulation *);
+extern struct tmp_ball *tmp_simulation_ball_init(struct tmp_simulation *);
 extern void tmp_simulation_subtick(struct tmp_simulation *, float delta);
 extern void tmp_simulation_tick(struct tmp_simulation *, float delta);
 extern void tmp_simulation_render(struct tmp_simulation *);

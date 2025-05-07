@@ -1,5 +1,27 @@
+#pragma once
+
 #define TMP_MAP_SIZE 800
-#define TMP_WINDOW_SIZE 800
+#define TMP_WINDOW_SIZE 1000
 #define TMP_BALL_COUNT 20000
 #define TMP_BALL_RADIUS 2
 #define TMP_SPATIAL_HASH_GRID_SIZE 4
+
+#ifndef TMP_MAP_SIZE
+#define TMP_MAP_SIZE 11000
+#endif
+
+#ifndef TMP_WINDOW_SIZE
+#define TMP_WINDOW_SIZE 1000
+#endif
+
+#ifndef TMP_BALL_COUNT
+#define TMP_BALL_COUNT 300000
+#endif
+
+#ifndef TMP_BALL_RADIUS
+#define TMP_BALL_RADIUS 2
+#endif
+
+#ifndef TMP_SPATIAL_HASH_GRID_SIZE
+#define TMP_SPATIAL_HASH_GRID_SIZE 12
+#endif

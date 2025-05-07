@@ -50,7 +50,7 @@ float tmp_get_random_cos(uint32_t seed);
     if (name##_end >= name##_cap)                                              \
     {                                                                          \
         uint64_t capacity = name##_cap - name;                                 \
-        type *new_data = realloc(name, (capacity * 2 + 1) * sizeof *name);     \
+        type *new_data = (type *)realloc(name, (capacity * 2 + 1) * sizeof *name);     \
         if (!new_data)                                                         \
             perror("no mem");                                                  \
         type *new_data_cap = new_data + capacity * 2 + 1;                      \
@@ -60,3 +60,9 @@ float tmp_get_random_cos(uint32_t seed);
     }
 
 #define tmp_vector_size(name) (name##_end - name)
+
+#ifdef __cplusplus
+#define RESTRICT __restrict
+#else
+#define RESTRICT restrict
+#endif

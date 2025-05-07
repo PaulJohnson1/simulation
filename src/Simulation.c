@@ -43,6 +43,7 @@ void tmp_simulation_init(struct tmp_simulation *s)
 struct tmp_ball *tmp_simulation_ball_init(struct tmp_simulation *s)
 {
     tmp_vector_grow(struct tmp_ball, s->balls);
+    memset(s->balls_end, 0, sizeof *s->balls_end);
     s->balls_end->position.x = s->balls_end->last_position.x =
         rand() % (TMP_MAP_SIZE - 2 * TMP_BALL_RADIUS) + TMP_BALL_RADIUS;
     s->balls_end->position.y = s->balls_end->last_position.y =
@@ -54,7 +55,7 @@ struct tmp_ball *tmp_simulation_ball_init(struct tmp_simulation *s)
 
 static void collide_balls(uint64_t a, uint64_t b, void const *c)
 {
-    struct tmp_simulation const *s = c;
+    struct tmp_simulation const *s = (struct tmp_simulation const *)c;
     tmp_ball_apply_collision(s->balls + a, s->balls + b);
 }
 
@@ -82,7 +83,7 @@ void tmp_simulation_tick(struct tmp_simulation *s, float dt)
     struct timeval start;
     struct timeval end;
     uint64_t elapsed_time;
-    uint64_t steps = 1;
+    uint64_t steps = 10;
     float sim_dt = 1 / (float)steps;
     static uint64_t average_time = -1;
 

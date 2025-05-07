@@ -13,9 +13,10 @@ void tmp_ball_apply_gravity(struct tmp_ball *b)
     // b->acceleration.y -= 0.1f;
 
     static uint64_t r = 1;
-    r ^= r >> 12;
-    r ^= r << 25;
-    r ^= r >> 27;
+    r++;
+    // r ^= r >> 12;
+    // r ^= r << 25;
+    // r ^= r >> 27;
     float acc_x = 0.25f * tmp_get_random_cos(r);
     float acc_y = 0.25f * tmp_get_random_sin(r);
     b->acceleration.x += acc_x;
@@ -30,8 +31,8 @@ void tmp_ball_apply_constraints(struct tmp_ball *b)
                               TMP_MAP_SIZE - TMP_BALL_RADIUS);
 }
 
-void tmp_ball_apply_collision(struct tmp_ball *restrict a,
-                              struct tmp_ball *restrict b)
+void tmp_ball_apply_collision(struct tmp_ball *RESTRICT a,
+                              struct tmp_ball *RESTRICT b)
 {
     const float dx = b->position.x - a->position.x;
     const float dy = b->position.y - a->position.y;
@@ -83,8 +84,8 @@ static void draw_circle(float x, float y, float radius)
     for (int i = 0; i < segments; i++)
     {
         float theta = 2.0f * M_PI * (float)i / (float)segments;
-        float dx = tmp_get_random_cos(theta) * radius;
-        float dy = tmp_get_random_sin(theta) * radius;
+        float dx = cosf(theta) * radius;
+        float dy = sinf(theta) * radius;
         glVertex2f(x + dx, y + dy);
     }
     glEnd();
