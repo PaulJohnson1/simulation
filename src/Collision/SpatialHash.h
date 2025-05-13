@@ -17,8 +17,8 @@ struct tmp_ball;
 struct tmp_spatial_hash
 {
     struct reference *references;
-    uint64_t references_size;
-    uint64_t free_reference;
+    uint32_t references_size;
+    uint32_t free_reference;
     // array of the current shg cell an entity occupies
     uint64_t current_entity_cells[TMP_BALL_COUNT];
     uint32_t cells[TMP_SPATIAL_HASH_CELL_COUNT];

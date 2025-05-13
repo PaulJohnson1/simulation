@@ -16,10 +16,10 @@
 // #include <Vector.c>
 // #include <Window.c>
 
-int main()
+int main(void)
 {
 #if !defined(WASM_BUILD) && !defined(NDEBUG)
-    feenableexcept(FE_INVALID | FE_DIVBYZERO);
+    feraiseexcept(FE_INVALID | FE_DIVBYZERO);
 #endif
     static struct tmp_window window = {0};
     struct tmp_simulation *simulation =
@@ -53,8 +53,7 @@ int main()
         }
     }
     return 0;
-#endif
-
+#else
     SDL_Init(SDL_INIT_VIDEO);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -75,20 +74,20 @@ int main()
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
     SDL_Event event;
-    int running = 1;
-    while (running)
+    while (true)
     {
         while (SDL_PollEvent(&event))
             if (event.type == SDL_EVENT_QUIT)
-                running = 0;
+                goto end;
 
-        tmp_window_tick(&window, 0.016);
+        tmp_window_tick(&window, 0.016f);
         SDL_GL_SwapWindow(gwindow);
     }
+end:
 
     SDL_Quit();
 
-    tmp_window_tick(&window, 0.5);
-
     return 0;
+#endif
 }
+

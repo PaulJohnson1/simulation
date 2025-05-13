@@ -98,11 +98,11 @@ void tmp_simulation_tick(struct tmp_simulation *s, float dt)
 
     gettimeofday(&end, NULL);
     elapsed_time =
-        ((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec));
+        (uint64_t)((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec));
     if (average_time == UINT64_MAX)
         average_time = elapsed_time;
-    average_time = tmp_lerp(average_time, elapsed_time, 0.1f);
-    float float_average = (float)average_time / 1000 / steps;
+    average_time = (uint64_t)tmp_lerp((double)average_time, (double)elapsed_time, 0.1);
+    double float_average = (double)average_time / 1000.0 / (double)steps;
     printf("average subtick %.3f mspt\n", float_average);
 }
 

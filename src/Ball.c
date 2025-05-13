@@ -84,7 +84,7 @@ static void draw_circle(float x, float y, float radius)
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     for (int i = 0; i < segments; i++)
     {
-        float theta = 2.0f * M_PI * (float)i / (float)segments;
+        float theta = 2.0f * (float)M_PI * (float)i / (float)segments;
         float dx = cosf(theta) * radius;
         float dy = sinf(theta) * radius;
         glVertex2f(x + dx, y + dy);

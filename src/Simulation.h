@@ -8,8 +8,8 @@ struct tmp_simulation
 {
     struct tmp_collision_manager collisions;
     struct tmp_collision_manager_entity collision_entities[TMP_BALL_COUNT];
-    uint64_t current_id;
     tmp_vector_declare(struct tmp_ball, balls)
+    uint32_t current_id;
 };
 
 extern void tmp_simulation_init(struct tmp_simulation *);

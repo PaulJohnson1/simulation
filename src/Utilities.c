@@ -41,18 +41,18 @@ __attribute__((constructor)) void tmp_init_lookup_tables()
 {
     for (uint64_t i = 0; i < TRIG_LOOKUP_SIZE; i++)
     {
-        float a = i;
+        float a = (float)i;
         sin_table[i] = sinf(a);
         cos_table[i] = cosf(a);
     }
 }
 
-float tmp_get_random_sin(uint32_t seed)
+float tmp_get_random_sin(uint64_t seed)
 {
     return sin_table[seed % TRIG_LOOKUP_SIZE];
 }
 
-float tmp_get_random_cos(uint32_t seed)
+float tmp_get_random_cos(uint64_t seed)
 {
     return cos_table[seed % TRIG_LOOKUP_SIZE];
 }

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #define TMP_THREAD_COUNT 8
 #define TMP_ROUND_UP(x, y) ((x + (y - 1)) / y)
@@ -27,8 +25,8 @@ float tmp_fclamp(float, float, float);
 char *tmp_sprintf(char *, double);
 float tmp_fast_inverse_root(float);
 void tmp_init_lookup_tables();
-float tmp_get_random_sin(uint32_t seed);
-float tmp_get_random_cos(uint32_t seed);
+float tmp_get_random_sin(uint64_t seed);
+float tmp_get_random_cos(uint64_t seed);
 
 #define TMP_SET_IF_GREATER(var, num)                                           \
     {                                                                          \
@@ -54,7 +52,7 @@ float tmp_get_random_cos(uint32_t seed);
 #define tmp_vector_grow(type, name)                                            \
     if (name##_end >= name##_cap)                                              \
     {                                                                          \
-        uint64_t capacity = name##_cap - name;                                 \
+        uint64_t capacity = (uint64_t)(name##_cap - name);                                 \
         type *new_data =                                                       \
             (type *)realloc(name, (capacity * 2 + 1) * sizeof *name);          \
         if (!new_data)                                                         \

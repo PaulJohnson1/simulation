@@ -14,8 +14,11 @@
 #define COLLISION_MANAGER_STR STRINGIFY(COLLISION_MANAGER)
 
 #define BASE_CFLAGS                                                            \
-    "-Wall", "-Wextra", "-Wpedantic", "-Isrc",                                 \
-        "-DTMP_USE_" COLLISION_MANAGER_STR
+    "-Werror", "-Weverything", "-Wno-unused-function",                         \
+        "-Wno-empty-translation-unit", "-Wstrict-prototypes", "-Wno-padded",      \
+        "-Wno-strict-prototypes", "-Wno-float-equal",                          \
+        "-Wno-declaration-after-statement", "-Wno-extra-semi-stmt",            \
+        "-Wno-missing-prototypes", "-Isrc", "-DTMP_USE_" COLLISION_MANAGER_STR
 #define BASE_LFLAGS "-lSDL3", "-lm", "-lGL"
 
 #define RELEASE_CFLAGS "-O3 -ffast-math -DNDEBUG"
@@ -58,26 +61,9 @@ char *str_replace(char *str, char find, char replace, uint64_t start_from)
 int write_to_file(const char *file_name, const char *contents)
 {
     FILE *fp = fopen(file_name, "w");
-    if (!fp)
-    {
-        // fopen failed: errno is set
-        return -1;
-    }
-
     size_t len = strlen(contents);
-    size_t written = fwrite(contents, 1, len, fp);
-    if (written < len)
-    {
-        // a write error occurred
-        fclose(fp);
-        return -1;
-    }
-
-    if (fclose(fp) != 0)
-    {
-        // error closing file
-        return -1;
-    }
+    fwrite(contents, 1, len, fp);
+    fclose(fp);
 
     return 0;
 }
