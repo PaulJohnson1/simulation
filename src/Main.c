@@ -9,17 +9,12 @@
 #include <Utilities.h>
 #include <Window.h>
 
-// #include <Ball.c>
-// #include <Simulation.c>
-// #include <SpatialHash.c>
-// #include <Utilities.c>
-// #include <Vector.c>
-// #include <Window.c>
+int feenableexcept(int exceptions);
 
 int main(void)
 {
 #if !defined(WASM_BUILD) && !defined(NDEBUG)
-    feraiseexcept(FE_INVALID | FE_DIVBYZERO);
+    feenableexcept(FE_INVALID | FE_DIVBYZERO);
 #endif
     static struct tmp_window window = {0};
     struct tmp_simulation *simulation =

@@ -125,9 +125,9 @@ static void print_grid(struct tmp_spatial_hash const *g)
     {
         if (!*cell)
             continue;
-        printf("cell %lu  \ti: ", cell - g->cells);
+        printf("cell %ld  \ti: ", cell - g->cells);
         for (uint32_t j = *cell; j; j = g->references[j].next)
-            printf("%d(%d),", j, g->references[j].data);
+            printf("%u(%u),", j, g->references[j].data);
         puts("eof");
     }
 }

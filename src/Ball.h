@@ -6,10 +6,10 @@
 
 struct tmp_ball
 {
-    struct tmp_simulation *simulation;
     struct tmp_vector position;
     struct tmp_vector last_position;
     struct tmp_vector acceleration;
+    struct tmp_simulation *simulation;
     uint32_t id;
 };
 

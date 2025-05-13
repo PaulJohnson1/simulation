@@ -14,11 +14,9 @@
 #define COLLISION_MANAGER_STR STRINGIFY(COLLISION_MANAGER)
 
 #define BASE_CFLAGS                                                            \
-    "-Werror", "-Weverything", "-Wno-unused-function",                         \
-        "-Wno-empty-translation-unit", "-Wstrict-prototypes", "-Wno-padded",      \
-        "-Wno-strict-prototypes", "-Wno-float-equal",                          \
-        "-Wno-declaration-after-statement", "-Wno-extra-semi-stmt",            \
-        "-Wno-missing-prototypes", "-Isrc", "-DTMP_USE_" COLLISION_MANAGER_STR
+    "-Werror", "-Wall", "-Wextra", "-Wpedantic", "-Wconversion",               \
+        "-Wno-empty-translation-unit", "-Wno-unused-function", "-Isrc",        \
+        "-DTMP_USE_" COLLISION_MANAGER_STR
 #define BASE_LFLAGS "-lSDL3", "-lm", "-lGL"
 
 #define RELEASE_CFLAGS "-O3 -ffast-math -DNDEBUG"
