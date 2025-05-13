@@ -1,0 +1,56 @@
+[
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Collision.BruteForce.c.o", "src/Collision/BruteForce.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Collision/BruteForce.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Collision.BruteForce.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Collision.Quadtree.c.o", "src/Collision/Quadtree.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Collision/Quadtree.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Collision.Quadtree.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Collision.SpatialHash.c.o", "src/Collision/SpatialHash.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Collision/SpatialHash.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Collision.SpatialHash.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Ball.c.o", "src/Ball.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Ball.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Ball.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Main.c.o", "src/Main.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Main.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Main.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Simulation.c.o", "src/Simulation.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Simulation.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Simulation.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Utilities.c.o", "src/Utilities.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Utilities.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Utilities.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Vector.c.o", "src/Vector.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Vector.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Vector.c.o"
+    },
+    {
+        "directory": "/home/paul/Documents/programming/physics",
+        "arguments": ["clang", "-c", "-o", "build/Window.c.o", "src/Window.c", "-Wall", "-Wextra", "-Wpedantic", "-Isrc", "-DTMP_USE_HASH_GRID"],
+        "file": "/home/paul/Documents/programming/physics/src/Window.c",
+        "output": "/home/paul/Documents/programming/physics/build/build/Window.c.o"
+    }
+]

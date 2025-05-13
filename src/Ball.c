@@ -31,8 +31,8 @@ void tmp_ball_apply_constraints(struct tmp_ball *b)
                               TMP_MAP_SIZE - TMP_BALL_RADIUS);
 }
 
-void tmp_ball_apply_collision(struct tmp_ball *RESTRICT a,
-                              struct tmp_ball *RESTRICT b)
+void tmp_ball_apply_collision(struct tmp_ball *restrict a,
+                              struct tmp_ball *restrict b)
 {
     const float dx = b->position.x - a->position.x;
     const float dy = b->position.y - a->position.y;
@@ -43,7 +43,8 @@ void tmp_ball_apply_collision(struct tmp_ball *RESTRICT a,
     if (d2 < min_distance_sq && d2 > 0.1f)
     {
         const float inv_d = tmp_fast_inverse_root(d2);
-        const float normal_scale = -0.01f + (1.0f / inv_d - min_distance) * 0.5f;
+        const float normal_scale =
+            -0.01f + (1.0f / inv_d - min_distance) * 0.5f;
         const float nx = dx * inv_d;
         const float ny = dy * inv_d;
 

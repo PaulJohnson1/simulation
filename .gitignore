@@ -1,5 +1,7 @@
 .vscode/
-native/
 build/
-web/
 a.out
+a.out.old
+main
+.cache/
+

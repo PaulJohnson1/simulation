@@ -10,11 +10,12 @@ struct tmp_window
 };
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-extern void tmp_window_init(struct tmp_window *);
-extern void tmp_window_tick(struct tmp_window *, float delta);
+    extern void tmp_window_init(struct tmp_window *);
+    extern void tmp_window_tick(struct tmp_window *, float delta);
 
 #ifdef __cplusplus
 }

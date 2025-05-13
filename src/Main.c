@@ -9,12 +9,12 @@
 #include <Utilities.h>
 #include <Window.h>
 
-#include <Ball.c>
-#include <Simulation.c>
-#include <SpatialHash.c>
-#include <Utilities.c>
-#include <Vector.c>
-#include <Window.c>
+// #include <Ball.c>
+// #include <Simulation.c>
+// #include <SpatialHash.c>
+// #include <Utilities.c>
+// #include <Vector.c>
+// #include <Window.c>
 
 int main()
 {
@@ -22,7 +22,8 @@ int main()
     feenableexcept(FE_INVALID | FE_DIVBYZERO);
 #endif
     static struct tmp_window window = {0};
-    struct tmp_simulation *simulation = (struct tmp_simulation *)malloc(sizeof *simulation);
+    struct tmp_simulation *simulation =
+        (struct tmp_simulation *)malloc(sizeof *simulation);
 
     tmp_window_init(&window);
     tmp_simulation_init(simulation);

@@ -1,1 +1,0 @@
-clang-15 Main.c -I. -lSDL3 -lm -lGL -O3 -flto -ffast-math -DNDEBUG -mtune=native -march=native -DNRENDER -fdebug-info-for-profiling -funique-internal-linkage-names -gline-tables-only -fprofile-instr-generate -fcoverage-mapping

@@ -1,8 +1,7 @@
-#include <SpatialHash.h>
+#include <Collision/SpatialHash.h>
 
 #include <Ball.h>
 #include <Simulation.h>
-#include <signal.h>
 #include <string.h>
 
 #define HASH_FUNCTION_FACTOR TMP_SPATIAL_HASH_CELL_COUNT_AXIS
@@ -129,7 +128,8 @@ static void print_grid(struct tmp_spatial_hash const *g)
 
 void tmp_spatial_hash_optimize(struct tmp_spatial_hash *g)
 {
-    struct reference *new_refs = (struct reference *)calloc(ll_size, sizeof *new_refs);
+    struct reference *new_refs =
+        (struct reference *)calloc(ll_size, sizeof *new_refs);
 
     uint32_t const *end = g->cells + TMP_SPATIAL_HASH_CELL_COUNT;
     uint64_t i = 1;
@@ -158,12 +158,12 @@ void tmp_spatial_hash_find_possible_collisions_single(
     struct tmp_spatial_hash const *g, void const *captures,
     void (*cb)(uint64_t, uint64_t, void const *))
 {
-#define search(h)                                             \
-    do                                                        \
-    {                                                         \
-        uint32_t cell = g->cells[h];                          \
-        for (uint32_t j = cell; j; j = g->references[j].next) \
-            cb(id_a, g->references[j].data, captures);        \
+#define search(h)                                                              \
+    do                                                                         \
+    {                                                                          \
+        uint32_t cell = g->cells[h];                                           \
+        for (uint32_t j = cell; j; j = g->references[j].next)                  \
+            cb(id_a, g->references[j].data, captures);                         \
     } while (0)
 
     uint64_t const end = TMP_SPATIAL_HASH_CELL_COUNT_AXIS;

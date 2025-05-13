@@ -16,7 +16,7 @@
 
 #define tmp_clamp(x, min_val, max_val)                                         \
     ((x) < (min_val) ? (min_val) : ((x) > (max_val) ? (max_val) : (x)))
-#define tmp_ceil(x, y) (((x) + (y) - 1) / (y))
+#define tmp_ceil(x, y) (((x) + (y)-1) / (y))
 #define tmp_lerp(s, e, t) ((1.0 - (t)) * (s) + (t) * (e))
 
 void tmp_log_hex(uint8_t *, uint8_t *);
@@ -46,11 +46,17 @@ float tmp_get_random_cos(uint32_t seed);
     type *name##_end;                                                          \
     type *name##_cap;
 
+#define tmp_vector_declare_zero(type, name)                                    \
+    type *name = 0;                                                            \
+    type *name##_end = 0;                                                      \
+    type *name##_cap = 0;
+
 #define tmp_vector_grow(type, name)                                            \
     if (name##_end >= name##_cap)                                              \
     {                                                                          \
         uint64_t capacity = name##_cap - name;                                 \
-        type *new_data = (type *)realloc(name, (capacity * 2 + 1) * sizeof *name);     \
+        type *new_data =                                                       \
+            (type *)realloc(name, (capacity * 2 + 1) * sizeof *name);          \
         if (!new_data)                                                         \
             perror("no mem");                                                  \
         type *new_data_cap = new_data + capacity * 2 + 1;                      \
@@ -62,7 +68,5 @@ float tmp_get_random_cos(uint32_t seed);
 #define tmp_vector_size(name) (name##_end - name)
 
 #ifdef __cplusplus
-#define RESTRICT __restrict
-#else
-#define RESTRICT restrict
+#define restrict
 #endif

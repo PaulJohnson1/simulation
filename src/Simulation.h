@@ -1,17 +1,15 @@
 #pragma once
 
-#include <SpatialHash.h>
+#include <Collision/CollisionManager.h>
 
 struct tmp_ball;
 
 struct tmp_simulation
 {
-    struct tmp_spatial_hash grid;
-    struct tmp_ball *balls;
-    struct tmp_ball *balls_end;
-    struct tmp_ball *balls_cap;
-    struct tmp_spatial_hash_entity grid_entities[TMP_BALL_COUNT];
+    struct tmp_collision_manager collisions;
+    struct tmp_collision_manager_entity collision_entities[TMP_BALL_COUNT];
     uint64_t current_id;
+    tmp_vector_declare(struct tmp_ball, balls)
 };
 
 extern void tmp_simulation_init(struct tmp_simulation *);

@@ -1,14 +1,14 @@
-#include <Simulation.h>
-#include <Simulation.c>
-#include <SpatialHash.c>
 #include <Ball.c>
+#include <Simulation.c>
+#include <Simulation.h>
+#include <SpatialHash.c>
 #include <Utilities.c>
 #include <Vector.c>
 
-#include <string>
 #include <chrono>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
+#include <string>
 
 // deepseek generated function
 template <typename T>
@@ -87,8 +87,8 @@ void benchmark(std::string label, T x, float time_seconds = 10)
         auto batch_end = steady_clock::now();
 
         total_iterations += final_batch_size;
-        std::cout << "took " << std::setprecision(2) << duration<float>(batch_end - batch_start).count()
-                  << "s\n";
+        std::cout << "took " << std::setprecision(2)
+                  << duration<float>(batch_end - batch_start).count() << "s\n";
     }
 
     const float total_elapsed =
@@ -98,12 +98,11 @@ void benchmark(std::string label, T x, float time_seconds = 10)
 
     std::cout << "\nResults:\n"
               << "  Operations: " << total_iterations << "\n"
-              << "  Time:       " << std::setprecision(2)
-              << total_elapsed << "s\n"
-              << "  Throughput: " << std::setprecision(2)
-              << ops_per_ms << " ops/ms\n"
-              << "  us/op       " << std::setprecision(4)
-              << us_per_ops << '\n';
+              << "  Time:       " << std::setprecision(2) << total_elapsed
+              << "s\n"
+              << "  Throughput: " << std::setprecision(2) << ops_per_ms
+              << " ops/ms\n"
+              << "  us/op       " << std::setprecision(4) << us_per_ops << '\n';
 
     std::cout.imbue(std::locale());
 }
@@ -114,13 +113,15 @@ int main()
 
     struct tmp_simulation tmp_simulation = {0};
     tmp_simulation_init(&tmp_simulation);
-    
-    benchmark("simulation with 10 subticks", [&](uint64_t index)
-              {
-                  if (index % 10 == 0)
-                      tmp_spatial_hash_optimize(&tmp_simulation.grid);
-                      
-                  tmp_simulation_subtick(&tmp_simulation, 0.1f);
-              },
-              10.0);
+
+    benchmark(
+        "simulation with 10 subticks",
+        [&](uint64_t index)
+        {
+            if (index % 10 == 0)
+                tmp_spatial_hash_optimize(&tmp_simulation.grid);
+
+            tmp_simulation_subtick(&tmp_simulation, 0.1f);
+        },
+        10.0);
 }

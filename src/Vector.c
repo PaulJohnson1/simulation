@@ -1,7 +1,7 @@
 #include <Vector.h>
 
-#include <math.h>
 #include <float.h>
+#include <math.h>
 
 #include <Utilities.h>
 
@@ -51,7 +51,8 @@ void tmp_vector_set_magnitude(struct tmp_vector *vector, float mag)
 {
     if (vector->x == 0 && vector->y == 0)
         return;
-    tmp_vector_scale(vector, mag / sqrtf(vector->x * vector->x + vector->y * vector->y));
+    tmp_vector_scale(
+        vector, mag / sqrtf(vector->x * vector->x + vector->y * vector->y));
 }
 
 float tmp_vector_get_magnitude(struct tmp_vector *vector)
