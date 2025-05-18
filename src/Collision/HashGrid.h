@@ -17,6 +17,7 @@ struct tmp_ball;
 struct tmp_spatial_hash
 {
     struct reference *references;
+    struct tmp_simulation *sim;
     uint32_t references_size;
     uint32_t free_reference;
     // array of the current shg cell an entity occupies
@@ -39,8 +40,8 @@ void tmp_spatial_hash_insert(struct tmp_spatial_hash *,
 void tmp_spatial_hash_update(struct tmp_spatial_hash *,
                              struct tmp_ball const *);
 void tmp_spatial_hash_update_multiple(
-    struct tmp_spatial_hash *, uint64_t size,
-    struct tmp_spatial_hash_entity const *begin);
+    struct tmp_spatial_hash *, struct tmp_spatial_hash_entity const *begin,
+    struct tmp_spatial_hash_entity const *end);
 void tmp_spatial_hash_optimize(struct tmp_spatial_hash *);
 #define tmp_spatial_hash_find_possible_collisions                              \
     tmp_spatial_hash_find_possible_collisions_single

@@ -4,29 +4,35 @@
 
 #include "src/Utilities.h"
 
+// #define DEBUG
+#define RELEASE
+
 #define BUILD_DIR "build/"
 #define SRC_DIR "src/"
 
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
 
-#define COLLISION_MANAGER HASH_GRID
-#define COLLISION_MANAGER_STR STRINGIFY(COLLISION_MANAGER)
+// #define COLLISION_MANAGER BRUTE_FORCE
+// #define COLLISION_MANAGER HASH_GRID
+// #define COLLISION_MANAGER NAIVE_HASH_GRID
+#define COLLISION_MANAGER QUADTREE
 
 #define BASE_CFLAGS                                                            \
     "-Werror", "-Wall", "-Wextra", "-Wpedantic", "-Wconversion",               \
-        "-Wno-empty-translation-unit", "-Wno-unused-function", "-Isrc",        \
-        "-DTMP_USE_" COLLISION_MANAGER_STR
+        "-Wno-empty-translation-unit", "-Wno-unused-function",                 \
+        "-Wno-extra-semi", "-Wno-gnu-empty-struct", "-Wno-strict-prototypes", "-Isrc",                   \
+        "-DTMP_USE_" STRINGIFY(COLLISION_MANAGER)
 #define BASE_LFLAGS "-lSDL3", "-lm", "-lGL"
 
-#define RELEASE_CFLAGS "-O3 -ffast-math -DNDEBUG"
+#define RELEASE_CFLAGS "-O3", "-ffast-math", "-DNDEBUG"
 #define RELEASE_LFLAGS "-flto"
 
-#define DEBUG_CFLAGS "-gdwarf-4 -DDEBUG"
+#define DEBUG_CFLAGS "-gdwarf-4", "-DDEBUG"
 
 #define PROFILE_CFLAGS "-gline-tables-only -fno-inline -O3 -DNDEBUG"
 
-#define CC "clang"
+#define CC "clang-15"
 #define CXX "clang++"
 
 #define DEBUG_ONLY(...)
@@ -90,7 +96,8 @@ int main(int argc, char **argv)
     *c.srcs_end++ = (src);
     append_c_src("Collision/BruteForce.c");
     append_c_src("Collision/Quadtree.c");
-    append_c_src("Collision/SpatialHash.c");
+    append_c_src("Collision/HashGrid.c");
+    append_c_src("Collision/NaiveHashGrid.c");
     append_c_src("Ball.c");
     append_c_src("Main.c");
     append_c_src("Simulation.c");
@@ -111,9 +118,10 @@ int main(int argc, char **argv)
         strcat(output, ".o");
         str_replace(output, '/', '.', sizeof BUILD_DIR);
 
-        nob_cmd_append(&cmd, CC, "-c", "-o", output, source, BASE_CFLAGS,
-                       RELEASE_ONLY(, RELEASE_CFLAGS) DEBUG_ONLY(, DEBUG_CFLAGS)
-                           PROFILE_ONLY(, PROFILE_CFLAGS));
+        nob_cmd_append(&cmd, CC, "-c", "-o", output, source,
+                       BASE_CFLAGS RELEASE_ONLY(, RELEASE_CFLAGS)
+                           DEBUG_ONLY(, DEBUG_CFLAGS)
+                               PROFILE_ONLY(, PROFILE_CFLAGS));
         if (!nob_cmd_run_sync(cmd))
             return 1;
 

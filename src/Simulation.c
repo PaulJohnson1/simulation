@@ -20,6 +20,7 @@ void tmp_simulation_init(struct tmp_simulation *s)
     s->balls_end++;
     // s->grid_entities = malloc(sizeof *s->grid_entities * TMP_BALL_COUNT);
     tmp_collision_manager_init(&s->collisions);
+    s->collisions.sim = s;
 
     // struct tmp_ball *a = tmp_simulation_ball_init(s);
     // struct tmp_ball *b = tmp_simulation_ball_init(s);
@@ -68,8 +69,9 @@ void tmp_simulation_subtick(struct tmp_simulation *s, float dt)
     for (int i = 1; i < TMP_BALL_COUNT; i++)
         tmp_collision_manager_entity_from_ball(s->collision_entities + i,
                                                s->balls + i);
-    tmp_collision_manager_update_multiple(&s->collisions, TMP_BALL_COUNT,
-                                          s->collision_entities);
+    tmp_collision_manager_update_multiple(&s->collisions, s->collision_entities,
+                                          s->collision_entities +
+                                              TMP_BALL_COUNT);
 
     tmp_collision_manager_find_possible_collisions(&s->collisions, s,
                                                    collide_balls);
@@ -97,11 +99,12 @@ void tmp_simulation_tick(struct tmp_simulation *s, float dt)
         tmp_simulation_subtick(s, sim_dt);
 
     gettimeofday(&end, NULL);
-    elapsed_time =
-        (uint64_t)((end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec));
+    elapsed_time = (uint64_t)((end.tv_sec - start.tv_sec) * 1000000 +
+                              (end.tv_usec - start.tv_usec));
     if (average_time == UINT64_MAX)
         average_time = elapsed_time;
-    average_time = (uint64_t)tmp_lerp((double)average_time, (double)elapsed_time, 0.1);
+    average_time =
+        (uint64_t)tmp_lerp((double)average_time, (double)elapsed_time, 0.1);
     double float_average = (double)average_time / 1000.0 / (double)steps;
     printf("average subtick %.3f mspt\n", float_average);
 }

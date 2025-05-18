@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Collision/CollisionManager.h>
+#include <Const.h>
+#include <Utilities.h>
 
 struct tmp_ball;
 
@@ -8,7 +10,7 @@ struct tmp_simulation
 {
     struct tmp_collision_manager collisions;
     struct tmp_collision_manager_entity collision_entities[TMP_BALL_COUNT];
-    tmp_vector_declare(struct tmp_ball, balls)
+    tmp_vector_declare(struct tmp_ball, balls);
     uint32_t current_id;
 };
 

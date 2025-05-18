@@ -1,10 +1,3 @@
-#include <Ball.c>
-#include <Simulation.c>
-#include <Simulation.h>
-#include <SpatialHash.c>
-#include <Utilities.c>
-#include <Vector.c>
-
 #include <chrono>
 #include <iomanip>
 #include <iostream>
@@ -111,7 +104,7 @@ int main()
 {
     printf("sizeof simulation: %lu\n", sizeof(struct tmp_simulation));
 
-    struct tmp_simulation tmp_simulation = {0};
+    struct tmp_simulation sim = {0};
     tmp_simulation_init(&tmp_simulation);
 
     benchmark(

@@ -1,4 +1,6 @@
-#include <Collision/SpatialHash.h>
+#include "Collision/HashGrid.h"
+#ifdef TMP_USE_HASH_GRID
+#include <Collision/HashGrid.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,10 +112,9 @@ void tmp_spatial_hash_update(struct tmp_spatial_hash *g,
 }
 
 void tmp_spatial_hash_update_multiple(
-    struct tmp_spatial_hash *g, uint64_t size,
-    struct tmp_spatial_hash_entity const *begin)
+    struct tmp_spatial_hash *g, struct tmp_spatial_hash_entity const *begin,
+    struct tmp_spatial_hash_entity const *end)
 {
-    struct tmp_spatial_hash_entity const *end = begin + size;
     for (struct tmp_spatial_hash_entity const *i = begin; i < end; i++)
         update_implementation(g, *i);
 }
@@ -201,3 +202,4 @@ void tmp_spatial_hash_find_possible_collisions_single(
             }
         }
 }
+#endif

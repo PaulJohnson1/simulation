@@ -1,7 +1,6 @@
 #include <Ball.h>
 
 #include <math.h>
-#include <stdlib.h>
 
 #include <GL/gl.h>
 
@@ -10,13 +9,12 @@
 
 void tmp_ball_apply_gravity(struct tmp_ball *b)
 {
-    // b->acceleration.y -= 0.1f;
+    b->acceleration.y -= 0.001f;
 
     static uint64_t r = 1;
-    r++;
-    // r ^= r >> 12;
-    // r ^= r << 25;
-    // r ^= r >> 27;
+    r ^= r >> 12;
+    r ^= r << 25;
+    r ^= r >> 27;
     float acc_x = 0.25f * tmp_get_random_cos(r);
     float acc_y = 0.25f * tmp_get_random_sin(r);
     b->acceleration.x += acc_x;

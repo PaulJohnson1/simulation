@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #define TMP_THREAD_COUNT 8
 #define TMP_ROUND_UP(x, y) ((x + (y - 1)) / y)
@@ -52,11 +53,9 @@ float tmp_get_random_cos(uint64_t seed);
 #define tmp_vector_grow(type, name)                                            \
     if (name##_end >= name##_cap)                                              \
     {                                                                          \
-        uint64_t capacity = (uint64_t)(name##_cap - name);                                 \
+        uint64_t capacity = (uint64_t)(name##_cap - name);                     \
         type *new_data =                                                       \
             (type *)realloc(name, (capacity * 2 + 1) * sizeof *name);          \
-        if (!new_data)                                                         \
-            perror("no mem");                                                  \
         type *new_data_cap = new_data + capacity * 2 + 1;                      \
         name = new_data;                                                       \
         name##_end = new_data + capacity;                                      \
