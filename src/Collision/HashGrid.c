@@ -15,16 +15,16 @@
 
 #define ll_size (TMP_BALL_COUNT)
 
-struct reference
+struct references
 {
-    uint32_t next;
-    uint32_t data;
+  uint32_t datas[TMP_BALL_COUNT];
+  uint32_t nexts[TMP_BALL_COUNT];
 };
 
 void tmp_spatial_hash_init(struct tmp_spatial_hash *g)
 {
     memset(g, 0, sizeof *g);
-    g->references = (struct reference *)calloc(ll_size, sizeof *g->references);
+    g->references = (struct references *)calloc(1, sizeof *g->references);
     g->references_size = 1;
 }
 
@@ -33,7 +33,7 @@ static uint32_t create_reference(struct tmp_spatial_hash *g)
     if (g->free_reference)
     {
         uint32_t r = g->free_reference;
-        g->free_reference = g->references[r].next;
+        g->free_reference = g->references->nexts[r];
         return r;
     }
 
@@ -44,24 +44,24 @@ static uint32_t create_reference(struct tmp_spatial_hash *g)
 void tmp_spatial_hash_insert(struct tmp_spatial_hash *g,
                              struct tmp_ball const *b)
 {
-    uint16_t x =
-        (uint16_t)tmp_clamp((int16_t)b->position.x, 0, TMP_MAP_SIZE - 1) /
+    uint64_t x =
+        (uint16_t)tmp_clamp((int64_t)b->position.x, 0, TMP_MAP_SIZE - 1) /
         TMP_SPATIAL_HASH_GRID_SIZE;
-    uint16_t y =
-        (uint16_t)tmp_clamp((int16_t)b->position.y, 0, TMP_MAP_SIZE - 1) /
+    uint64_t y =
+        (uint64_t)tmp_clamp((int64_t)b->position.y, 0, TMP_MAP_SIZE - 1) /
         TMP_SPATIAL_HASH_GRID_SIZE;
     uint64_t hash = HASH_FUNCTION(x, y);
     g->current_entity_cells[b->id] = hash;
     uint32_t i = create_reference(g);
-    g->references[i].data = b->id;
-    g->references[i].next = g->cells[hash];
+    g->references->datas[i] = b->id;
+    g->references->nexts[i] = g->cells[hash];
     g->cells[hash] = i;
 }
 
 static void update_implementation(struct tmp_spatial_hash *g,
                                   struct tmp_spatial_hash_entity const entity)
 {
-    uint64_t new_hash = HASH_FUNCTION(entity.x, entity.y);
+    uint64_t new_hash = HASH_FUNCTION((uint64_t)entity.x, (uint64_t)entity.y);
     uint64_t old_hash = g->current_entity_cells[entity.id];
     if (new_hash == old_hash)
         return;
@@ -73,23 +73,23 @@ static void update_implementation(struct tmp_spatial_hash *g,
     uint32_t prev = 0;
     while (current != 0)
     {
-        if (g->references[current].data == entity.id)
+        if (g->references->datas[current] == entity.id)
         {
             if (prev == 0)
-                g->cells[old_hash] = g->references[current].next;
+                g->cells[old_hash] = g->references->nexts[current];
             else
-                g->references[prev].next = g->references[current].next;
+                g->references->nexts[prev] = g->references->nexts[current];
             break;
         }
 
         prev = current;
-        current = g->references[current].next;
+        current = g->references->nexts[current];
     }
 
     // insert
     // can reuse the same linked list element
-    g->references[current].data = entity.id;
-    g->references[current].next = g->cells[new_hash];
+    g->references->datas[current] = entity.id;
+    g->references->nexts[current] = g->cells[new_hash];
     g->cells[new_hash] = current;
 }
 
@@ -127,16 +127,16 @@ static void print_grid(struct tmp_spatial_hash const *g)
         if (!*cell)
             continue;
         printf("cell %ld  \ti: ", cell - g->cells);
-        for (uint32_t j = *cell; j; j = g->references[j].next)
-            printf("%u(%u),", j, g->references[j].data);
+        for (uint32_t j = *cell; j; j = g->references->nexts[j])
+            printf("%u(%u),", j, g->references->datas[j]);
         puts("eof");
     }
 }
 
 void tmp_spatial_hash_optimize(struct tmp_spatial_hash *g)
 {
-    struct reference *new_refs =
-        (struct reference *)calloc(ll_size, sizeof *new_refs);
+    struct references *new_refs =
+        (struct references *)calloc(1, sizeof *new_refs);
 
     uint32_t const *end = g->cells + TMP_SPATIAL_HASH_CELL_COUNT;
     uint32_t i = 1;
@@ -147,13 +147,13 @@ void tmp_spatial_hash_optimize(struct tmp_spatial_hash *g)
         uint32_t const entity_i = *cell;
         *cell = i;
 
-        for (uint32_t j = entity_i; j; j = g->references[j].next)
+        for (uint32_t j = entity_i; j; j = g->references->nexts[j])
         {
-            new_refs[i].data = g->references[j].data;
-            new_refs[i].next = i + 1;
+            new_refs->datas[i] = g->references->datas[j];
+            new_refs->nexts[i] = i + 1;
             i++;
         }
-        new_refs[i - 1].next = 0;
+        new_refs->nexts[i - 1] = 0;
     }
 
     free(g->references);
@@ -169,8 +169,8 @@ void tmp_spatial_hash_find_possible_collisions_single(
     do                                                                         \
     {                                                                          \
         uint32_t inner_cell = g->cells[h];                                     \
-        for (uint32_t j = inner_cell; j; j = g->references[j].next)            \
-            cb(id_a, g->references[j].data, captures);                         \
+        for (uint32_t j = inner_cell; j; j = g->references->nexts[j])            \
+            cb(id_a, g->references->datas[j], captures);                         \
     } while (0)
 
     uint64_t const end = TMP_SPATIAL_HASH_CELL_COUNT_AXIS;
@@ -179,14 +179,14 @@ void tmp_spatial_hash_find_possible_collisions_single(
         {
             uint64_t const hash = HASH_FUNCTION(x, y);
             uint32_t const cell = g->cells[hash];
-            for (uint32_t i = cell; i; i = g->references[i].next)
+            for (uint32_t i = cell; i; i = g->references->nexts[i])
             {
-                uint64_t const id_a = g->references[i].data;
+                uint64_t const id_a = g->references->datas[i];
 
                 // middle
-                for (uint32_t j = g->references[i].next; j;
-                     j = g->references[j].next)
-                    cb(id_a, g->references[j].data, captures);
+                for (uint32_t j = g->references->nexts[i]; j;
+                     j = g->references->nexts[j])
+                    cb(id_a, g->references->datas[j], captures);
 
                 if (x < end)
                     search(hash + 1); // right

@@ -16,7 +16,7 @@ struct tmp_ball;
 
 struct tmp_spatial_hash
 {
-    struct reference *references;
+    struct references *references;
     struct tmp_simulation *sim;
     uint32_t references_size;
     uint32_t free_reference;
@@ -32,6 +32,7 @@ struct tmp_spatial_hash_entity
     uint16_t y;
 };
 
+CPLUSPLUS_PREFIX
 void tmp_spatial_hash_entity_from_ball(struct tmp_spatial_hash_entity *,
                                        struct tmp_ball const *);
 void tmp_spatial_hash_init(struct tmp_spatial_hash *);
@@ -51,3 +52,4 @@ void tmp_spatial_hash_find_possible_collisions_single(
 void tmp_spatial_hash_find_possible_collisions_multi(
     struct tmp_spatial_hash *, void *user_captures,
     void (*cb)(uint64_t, uint64_t, void *));
+CPLUSPLUS_SUFFIX

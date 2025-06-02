@@ -9,7 +9,7 @@
 
 void tmp_ball_apply_gravity(struct tmp_ball *b)
 {
-    b->acceleration.y -= 0.001f;
+    // b->acceleration.y -= 0.001f;
 
     static uint64_t r = 1;
     r ^= r >> 12;
@@ -73,23 +73,34 @@ void tmp_ball_tick_verlet(struct tmp_ball *b, float dt)
     b->acceleration.y = 0;
 }
 
-static void draw_circle(float x, float y, float radius)
-{
+static void draw_circle(float x, float y, float radius) {
     const int segments = 16;
-    glEnable(GL_LINE_SMOOTH);
-    glBegin(GL_TRIANGLE_FAN);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    for (int i = 0; i < segments; i++)
-    {
-        float theta = 2.0f * (float)M_PI * (float)i / (float)segments;
-        float dx = cosf(theta) * radius;
-        float dy = sinf(theta) * radius;
-        glVertex2f(x + dx, y + dy);
+    static float vertices[340]; // (segments+1) * 2 floats
+    static int initialized = 0;
+
+    if (!initialized) {
+        for (int i = 0; i <= segments; i++) {
+            float theta = 2.0f * (float)M_PI * (float)i / (float)segments;
+            vertices[2*i] = cosf(theta);
+            vertices[2*i + 1] = sinf(theta);
+        }
+        initialized = 1;
     }
-    glEnd();
-    glDisable(GL_LINE_SMOOTH);
-    glDisable(GL_BLEND);
+
+    // Transform unit circle to final position/size
+    float final_vertices[35];
+    final_vertices[0] = x;
+    final_vertices[1] = y;
+    for (int i = 1; i <= segments + 1; i++) {
+        final_vertices[2*i] = x + vertices[2*(i-1)] * radius;
+        final_vertices[2*i + 1] = y + vertices[2*(i-1) + 1] * radius;
+    }
+
+    // Draw using vertex arrays
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, final_vertices);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, segments + 2);
+    glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void tmp_ball_render(struct tmp_ball *b)

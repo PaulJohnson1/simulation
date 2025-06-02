@@ -1,8 +1,8 @@
 #pragma once
 
 #define TMP_MAP_SIZE 800
-#define TMP_WINDOW_SIZE 1000
-#define TMP_BALL_COUNT 3000
+#define TMP_WINDOW_SIZE 600
+#define TMP_BALL_COUNT 20000
 #define TMP_BALL_RADIUS 2
 #define TMP_SPATIAL_HASH_GRID_SIZE 4
 

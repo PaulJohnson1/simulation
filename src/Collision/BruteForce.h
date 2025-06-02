@@ -7,6 +7,7 @@ struct tmp_simulation;
 
 struct tmp_brute_force_entity
 {
+  char placeholder;
 };
 
 struct tmp_brute_force

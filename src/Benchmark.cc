@@ -1,120 +1,87 @@
-#include <chrono>
-#include <iomanip>
+#include <Simulation.h>
+#include <cinttypes>
 #include <iostream>
 #include <string>
+#include <sys/time.h>
 
-// deepseek generated function
-template <typename T>
-void benchmark(std::string label, T x, float time_seconds = 10)
+uint64_t get_us_from_timeval(struct timeval x)
 {
-    using namespace std::chrono;
+    return (uint64_t)(x.tv_sec * 1'000'000 + x.tv_usec);
+}
 
-    struct comma_numpunct : std::numpunct<char>
-    {
-        char do_thousands_sep() const override { return ','; }
-        std::string do_grouping() const override { return "\03"; }
-    };
-    std::locale comma_locale(std::locale(), new comma_numpunct());
-    std::cout.imbue(comma_locale);
+template <typename T>
+void benchmark(std::string label, T x, uint64_t time_useconds)
+{
+    (void)label;
+    int64_t next_batch_size = 1;
+    uint64_t total_iterations = 0;
 
-    const auto start_time = steady_clock::now();
-    const auto target_duration =
-        duration_cast<nanoseconds>(duration<float>(time_seconds));
-
-    int64_t total_iterations = 0;
-    int64_t batch_size = 1;
-
-    std::cout << "Benchmarking " << std::quoted(label) << " for ~"
-              << time_seconds << "s:\n";
+    struct timeval benchmark_start_timeval;
+    gettimeofday(&benchmark_start_timeval, NULL);
+    uint64_t benchmark_start = get_us_from_timeval(benchmark_start_timeval);
+    uint64_t benchmark_end = benchmark_start + time_useconds;
 
     while (true)
     {
-        std::cout << "  Batch size: " << std::setw(12) << batch_size
-                  << " | Running... ";
-        auto batch_start = steady_clock::now();
-
-        for (int64_t i = 0; i < batch_size; ++i)
+        printf("running batch of size:\t%" PRIu64, next_batch_size);
+        fflush(stdout);
+        struct timeval start;
+        gettimeofday(&start, NULL);
+        for (int64_t i = 0; i < next_batch_size; i++)
         {
-            x(i + total_iterations);
-            asm volatile("" : : : "memory");
+            x(total_iterations);
+            total_iterations++;
         }
+        struct timeval end;
+        gettimeofday(&end, NULL);
 
-        auto batch_end = steady_clock::now();
-        total_iterations += batch_size;
-
-        const float batch_time =
-            duration<float>(batch_end - batch_start).count();
-        const float total_time =
-            duration<float>(batch_end - start_time).count();
-
-        std::cout << "took " << std::fixed << std::setprecision(6) << batch_time
-                  << "s | Total: " << total_time << "s\n";
-
-        if (total_time >= time_seconds)
+        uint64_t time_elapsed =
+            get_us_from_timeval(end) - get_us_from_timeval(start);
+        printf(": took %" PRIu64 " us\n", time_elapsed);
+        int64_t time_remaining =
+            (int64_t)benchmark_end - (int64_t)get_us_from_timeval(end);
+        // prevent divide by 0
+        if (next_batch_size == 0)
             break;
-
-        if (batch_time < time_seconds * 0.01f)
-            batch_size *= 2;
-        else
-            batch_size = std::max<int64_t>(1, batch_size * 1.5f);
+        next_batch_size =
+            time_remaining / ((int64_t)time_elapsed / next_batch_size);
+        next_batch_size -= next_batch_size / 5;
+        if (time_remaining < 0 || next_batch_size == 0)
+            break;
     }
 
-    const auto final_start = steady_clock::now();
-    const float measured_time =
-        duration<float>(final_start - start_time).count();
-    const float remaining_time = std::max(0.0f, time_seconds - measured_time);
+    struct timeval benchmark_end_timeval;
+    gettimeofday(&benchmark_end_timeval, NULL);
+    uint64_t benchmark_time_elapsed =
+        get_us_from_timeval(benchmark_end_timeval) - benchmark_start;
 
-    if (remaining_time > 0)
-    {
-        const int64_t final_batch_size = static_cast<int64_t>(
-            total_iterations * remaining_time / measured_time);
-        std::cout << "  Final batch: " << std::setw(12) << final_batch_size
-                  << " | Running... ";
-
-        auto batch_start = steady_clock::now();
-        for (int64_t i = 0; i < final_batch_size; ++i)
-        {
-            x(total_iterations + i);
-            asm volatile("" : : : "memory");
-        }
-        auto batch_end = steady_clock::now();
-
-        total_iterations += final_batch_size;
-        std::cout << "took " << std::setprecision(2)
-                  << duration<float>(batch_end - batch_start).count() << "s\n";
-    }
-
-    const float total_elapsed =
-        duration<float>(steady_clock::now() - start_time).count();
-    const float ops_per_ms = total_iterations / total_elapsed / 1000.0;
-    float us_per_ops = total_elapsed / total_iterations * 1'000'000;
-
-    std::cout << "\nResults:\n"
-              << "  Operations: " << total_iterations << "\n"
-              << "  Time:       " << std::setprecision(2) << total_elapsed
-              << "s\n"
-              << "  Throughput: " << std::setprecision(2) << ops_per_ms
-              << " ops/ms\n"
-              << "  us/op       " << std::setprecision(4) << us_per_ops << '\n';
-
-    std::cout.imbue(std::locale());
+    printf("results: \n"
+           "\titerations: %lu\n"
+           "\ttime:\t%lu\n"
+           "\tus/op:\t%.3f\n"
+           "\tops/ms:\t%.3f\n",
+           total_iterations, benchmark_time_elapsed,
+           (float)benchmark_time_elapsed / (float)total_iterations,
+           (float)total_iterations / ((float)benchmark_time_elapsed / 1'000));
 }
 
 int main()
 {
     printf("sizeof simulation: %lu\n", sizeof(struct tmp_simulation));
 
-    struct tmp_simulation sim = {0};
-    tmp_simulation_init(&tmp_simulation);
+    struct tmp_simulation sim;
+    tmp_simulation_init(&sim);
 
+    // for (uint64_t i = 1; i < 1000; i *= 2)
     benchmark(
-        "simulation with 10 subticks",
+        "simulation",
         [&](uint64_t index)
         {
-            if (index % 10 == 0)
-                tmp_spatial_hash_optimize(&tmp_simulation.grid);
+            (void)index;
+            // if (index % 10 == 0)
+            // tmp_collision_manager_optimize(&sim.collisions);
 
-            tmp_simulation_subtick(&tmp_simulation, 0.1f);
+            tmp_simulation_subtick(&sim, 0.1f);
         },
-        10.0);
+        60'000'000);
 }

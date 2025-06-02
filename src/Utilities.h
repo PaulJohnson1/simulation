@@ -13,6 +13,14 @@
 #define TMP_UNREACHABLE(MESSAGE) __builtin_unreachable()
 #endif
 
+#ifdef __cplusplus
+#define CPLUSPLUS_PREFIX extern "C" {
+#define CPLUSPLUS_SUFFIX }
+#else
+#define CPLUSPLUS_PREFIX
+#define CPLUSPLUS_SUFFIX
+#endif
+
 #define tmp_clamp(x, min_val, max_val)                                         \
     ((x) < (min_val) ? (min_val) : ((x) > (max_val) ? (max_val) : (x)))
 #define tmp_ceil(x, y) (((x) + (y)-1) / (y))
