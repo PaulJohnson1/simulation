@@ -1,4 +1,3 @@
-#include "Collision/HashGrid.h"
 #ifdef TMP_USE_HASH_GRID
 #include <Collision/HashGrid.h>
 
@@ -17,8 +16,8 @@
 
 struct references
 {
-  uint32_t datas[TMP_BALL_COUNT];
-  uint32_t nexts[TMP_BALL_COUNT];
+    uint32_t datas[TMP_BALL_COUNT];
+    uint32_t nexts[TMP_BALL_COUNT];
 };
 
 void tmp_spatial_hash_init(struct tmp_spatial_hash *g)
@@ -162,23 +161,30 @@ void tmp_spatial_hash_optimize(struct tmp_spatial_hash *g)
 }
 
 void tmp_spatial_hash_find_possible_collisions_single(
-    struct tmp_spatial_hash const *g, void const *captures,
-    void (*cb)(uint64_t, uint64_t, void const *))
+    struct tmp_spatial_hash const *g, void *captures,
+    void (*cb)(uint64_t, uint64_t, void *))
 {
 #define search(h)                                                              \
     do                                                                         \
     {                                                                          \
-        uint32_t inner_cell = g->cells[h];                                     \
-        for (uint32_t j = inner_cell; j; j = g->references->nexts[j])            \
-            cb(id_a, g->references->datas[j], captures);                         \
+        for (uint32_t j = g->cells[h]; j; j = g->references->nexts[j])         \
+            cb(id_a, g->references->datas[j], captures);                       \
+    } while (0)
+#define prefetch(h)                                                            \
+    do                                                                         \
+    {                                                                          \
+        __builtin_prefetch(g->references->nexts + (h), 0, 0);                  \
+        __builtin_prefetch(g->references->datas + (h), 0, 0);                  \
     } while (0)
 
     uint64_t const end = TMP_SPATIAL_HASH_CELL_COUNT_AXIS;
     for (uint64_t y = 0; y < end; y++)
+    {
         for (uint64_t x = 0; x < end; x++)
         {
             uint64_t const hash = HASH_FUNCTION(x, y);
             uint32_t const cell = g->cells[hash];
+
             for (uint32_t i = cell; i; i = g->references->nexts[i])
             {
                 uint64_t const id_a = g->references->datas[i];
@@ -188,18 +194,19 @@ void tmp_spatial_hash_find_possible_collisions_single(
                      j = g->references->nexts[j])
                     cb(id_a, g->references->datas[j], captures);
 
-                if (x < end)
+                if (x < end - 1)
                     search(hash + 1); // right
 
                 if (y > 0)
                 {
+                    search(hash - HASH_FUNCTION_FACTOR); // down
                     if (x > 0)
                         search(hash - HASH_FUNCTION_FACTOR - 1); // down left
-                    if (x < end)
+                    if (x < end - 1)
                         search(hash - HASH_FUNCTION_FACTOR + 1); // down right
-                    search(hash - HASH_FUNCTION_FACTOR);         // down
                 }
             }
         }
+    }
 }
 #endif

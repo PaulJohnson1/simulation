@@ -9,7 +9,7 @@
 
 void tmp_ball_apply_gravity(struct tmp_ball *b)
 {
-    // b->acceleration.y -= 0.01f;
+    // b->acceleration.y -= 0.002f / TMP_DT;
 
     static uint64_t r = 1;
     r ^= r >> 12;
@@ -60,29 +60,32 @@ struct tmp_vector tmp_ball_get_velocity(struct tmp_ball *b)
     return v;
 }
 
-void tmp_ball_tick_verlet(struct tmp_ball *b, float dt)
+void tmp_ball_tick_verlet(struct tmp_ball *b)
 {
     struct tmp_vector displacement = tmp_ball_get_velocity(b);
 
     b->last_position = b->position;
 
-    b->position.x += displacement.x + b->acceleration.x * dt * dt;
-    b->position.y += displacement.y + b->acceleration.y * dt * dt;
+    b->position.x += displacement.x + b->acceleration.x * TMP_DT_SQ;
+    b->position.y += displacement.y + b->acceleration.y * TMP_DT_SQ;
 
     b->acceleration.x = 0;
     b->acceleration.y = 0;
 }
 
-static void draw_circle(float x, float y, float radius) {
+static void draw_circle(float x, float y, float radius)
+{
     const int segments = 16;
     static float vertices[340]; // (segments+1) * 2 floats
     static int initialized = 0;
 
-    if (!initialized) {
-        for (int i = 0; i <= segments; i++) {
+    if (!initialized)
+    {
+        for (int i = 0; i <= segments; i++)
+        {
             float theta = 2.0f * (float)M_PI * (float)i / (float)segments;
-            vertices[2*i] = cosf(theta);
-            vertices[2*i + 1] = sinf(theta);
+            vertices[2 * i] = cosf(theta);
+            vertices[2 * i + 1] = sinf(theta);
         }
         initialized = 1;
     }
@@ -91,9 +94,10 @@ static void draw_circle(float x, float y, float radius) {
     float final_vertices[36];
     final_vertices[0] = x;
     final_vertices[1] = y;
-    for (int i = 1; i <= segments + 1; i++) {
-        final_vertices[2*i] = x + vertices[2*(i-1)] * radius;
-        final_vertices[2*i + 1] = y + vertices[2*(i-1) + 1] * radius;
+    for (int i = 1; i <= segments + 1; i++)
+    {
+        final_vertices[2 * i] = x + vertices[2 * (i - 1)] * radius;
+        final_vertices[2 * i + 1] = y + vertices[2 * (i - 1) + 1] * radius;
     }
 
     // Draw using vertex arrays

@@ -1,3 +1,4 @@
+#include "Utilities.h"
 #include <Simulation.h>
 
 #include <stdint.h>
@@ -11,101 +12,101 @@
 #include <Ball.h>
 #include <Const.h>
 
-void tmp_simulation_init(struct tmp_simulation *s) {
-  memset(s, 0, sizeof *s);
-  // skip id 0 (it's the null entity)
-  s->current_id = 1;
-  tmp_vector_grow(struct tmp_ball, s->balls);
-  s->balls_end++;
-  tmp_collision_manager_init(&s->collisions);
-  s->collisions.sim = s;
+void tmp_simulation_init(struct tmp_simulation *s)
+{
+    memset(s, 0, sizeof *s);
+    tmp_collision_manager_init(&s->collisions);
+    s->collisions.sim = s;
 
-  for (uint64_t i = 1; i < TMP_BALL_COUNT; i++)
-    tmp_simulation_ball_init(s);
-  for (uint64_t i = 1; i < TMP_BALL_COUNT; i++)
-    tmp_collision_manager_insert(&s->collisions, s->balls + i);
+    for (uint64_t i = 0; i < TMP_BALL_COUNT; i++)
+        tmp_simulation_ball_init(s);
 }
 
-struct tmp_ball *tmp_simulation_ball_init(struct tmp_simulation *s) {
-  tmp_vector_grow(struct tmp_ball, s->balls);
-  memset(s->balls_end, 0, sizeof *s->balls_end);
-  s->balls_end->position.x = s->balls_end->last_position.x =
-      (float)(rand() % (TMP_MAP_SIZE - 2 * TMP_BALL_RADIUS) + TMP_BALL_RADIUS);
-  s->balls_end->position.y = s->balls_end->last_position.y =
-      (float)(rand() % (TMP_MAP_SIZE - 2 * TMP_BALL_RADIUS) + TMP_BALL_RADIUS);
-  s->balls_end->id = s->current_id++;
-  s->balls_end->simulation = s;
-  return s->balls_end++;
+struct tmp_ball *tmp_simulation_ball_init(struct tmp_simulation *s)
+{
+    uint32_t id = s->current_id++;
+    s->balls[id].position.x = s->balls[id].last_position.x =
+        (float)(rand() % (TMP_MAP_SIZE - 2 * TMP_BALL_RADIUS) +
+                TMP_BALL_RADIUS);
+    s->balls[id].position.y = s->balls[id].last_position.y =
+        (float)(rand() % (TMP_MAP_SIZE - 2 * TMP_BALL_RADIUS) +
+                TMP_BALL_RADIUS);
+    s->balls[id].id = id;
+    s->balls[id].simulation = s;
+    tmp_collision_manager_insert(&s->collisions, s->balls + id);
+    return s->balls + id;
 }
 
-static void collide_balls(uint64_t a, uint64_t b, void const *c) {
-  struct tmp_simulation const *s = (struct tmp_simulation const *)c;
-  tmp_ball_apply_collision(s->balls + a, s->balls + b);
+static void collide_balls(uint64_t a, uint64_t b, void *c)
+{
+    struct tmp_simulation *s = (struct tmp_simulation *)c;
+    tmp_ball_apply_collision(s->balls + a, s->balls + b);
 }
 
-void tmp_simulation_subtick(struct tmp_simulation *s, float dt) {
-  struct tmp_ball *balls_end = s->balls_end;
+void tmp_simulation_subtick(struct tmp_simulation *s)
+{
+    struct tmp_ball *balls_end = s->balls + TMP_BALL_COUNT;
 
-  for (struct tmp_ball *i = s->balls + 1; i < balls_end; i++)
-    tmp_ball_apply_gravity(i);
-  for (int i = 1; i < TMP_BALL_COUNT; i++)
-    tmp_collision_manager_entity_from_ball(s->collision_entities + i,
-                                           s->balls + i);
-  tmp_collision_manager_update_multiple(&s->collisions, s->collision_entities,
-                                        s->collision_entities + TMP_BALL_COUNT);
+    for (struct tmp_ball *i = s->balls; i < balls_end; i++)
+        tmp_ball_apply_gravity(i);
+    for (int i = 0; i < TMP_BALL_COUNT; i++)
+        tmp_collision_manager_entity_from_ball(s->collision_entities + i,
+                                               s->balls + i);
+    tmp_collision_manager_update_multiple(&s->collisions, s->collision_entities,
+                                          s->collision_entities +
+                                              TMP_BALL_COUNT);
 
-  tmp_collision_manager_find_possible_collisions(&s->collisions, s,
-                                                 collide_balls);
+    tmp_collision_manager_find_possible_collisions(&s->collisions, s,
+                                                   collide_balls);
 
-  for (struct tmp_ball *i = s->balls + 1; i < balls_end; i++)
-    tmp_ball_apply_constraints(i);
-  for (struct tmp_ball *i = s->balls + 1; i < balls_end; i++)
-    tmp_ball_tick_verlet(i, dt);
+    for (struct tmp_ball *i = s->balls; i < balls_end; i++)
+        tmp_ball_apply_constraints(i);
+    for (struct tmp_ball *i = s->balls; i < balls_end; i++)
+        tmp_ball_tick_verlet(i);
 }
 
-void tmp_simulation_tick(struct tmp_simulation *s, float dt) {
-  (void)dt;
-  struct timeval start;
-  struct timeval end;
-  uint64_t elapsed_time;
-  uint64_t steps = 10;
-  float sim_dt = 1 / (float)steps;
-  static uint64_t average_time = UINT64_MAX;
+void tmp_simulation_tick(struct tmp_simulation *s)
+{
+    struct timeval start;
+    struct timeval end;
+    uint64_t elapsed_time;
+    static uint64_t average_time = UINT64_MAX;
 
-  gettimeofday(&start, NULL);
+    gettimeofday(&start, NULL);
 
-  tmp_collision_manager_optimize(&s->collisions);
-  for (uint64_t i = 0; i < steps; i++)
-    tmp_simulation_subtick(s, sim_dt);
+    tmp_collision_manager_optimize(&s->collisions);
+    for (uint64_t i = 0; i < TMP_SIMULATION_SUBTICKS; i++)
+        tmp_simulation_subtick(s);
 
-  gettimeofday(&end, NULL);
-  elapsed_time = (uint64_t)((end.tv_sec - start.tv_sec) * 1000000 +
-                            (end.tv_usec - start.tv_usec));
-  if (average_time == UINT64_MAX)
-    average_time = elapsed_time;
-  average_time =
-      (uint64_t)tmp_lerp((double)average_time, (double)elapsed_time, 0.1);
-  double float_average = (double)average_time / 1000.0 / (double)steps;
-  printf("average subtick %.3f mspt\n", float_average);
+    gettimeofday(&end, NULL);
+    elapsed_time = (uint64_t)((end.tv_sec - start.tv_sec) * 1000000 +
+                              (end.tv_usec - start.tv_usec));
+    if (average_time == UINT64_MAX)
+        average_time = elapsed_time;
+    average_time =
+        (uint64_t)tmp_lerp((double)average_time, (double)elapsed_time, 0.1);
+    double float_average = (double)average_time / 1000.0 / (double)TMP_SIMULATION_SUBTICKS;
+    printf("average subtick %.3f mspt\n", float_average);
 }
 
-void tmp_simulation_render(struct tmp_simulation *s) {
+void tmp_simulation_render(struct tmp_simulation *s)
+{
 #ifdef NRENDER
-  return;
+    return;
 #endif
 
 #ifdef TIME_RENDERER
-  struct timeval start;
-  struct timeval end;
+    struct timeval start;
+    struct timeval end;
 
-  gettimeofday(&start, NULL);
+    gettimeofday(&start, NULL);
 #endif
-  for (struct tmp_ball *i = s->balls + 1; i < s->balls_end; i++)
-    tmp_ball_render(i);
+    for (struct tmp_ball *i = s->balls; i < s->balls + TMP_BALL_COUNT; i++)
+        tmp_ball_render(i);
 #ifdef TIME_RENDERER
-  gettimeofday(&end, NULL);
-  uint64_t elapsed_time = (uint64_t)((end.tv_sec - start.tv_sec) * 1000000 +
-                                     (end.tv_usec - start.tv_usec));
-  printf("render time: %.3f mspt\n", (float)elapsed_time / 1000.0f);
+    gettimeofday(&end, NULL);
+    uint64_t elapsed_time = (uint64_t)((end.tv_sec - start.tv_sec) * 1000000 +
+                                       (end.tv_usec - start.tv_usec));
+    printf("render time: %.3f mspt\n", (float)elapsed_time / 1000.0f);
 #endif
 }

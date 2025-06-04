@@ -13,7 +13,7 @@ void tmp_window_tick(struct tmp_window *w, float delta)
 {
     (void)w;
     (void)delta;
-    tmp_simulation_tick(w->simulation, 1);
+    tmp_simulation_tick(w->simulation);
 #ifdef NRENDER
     return;
 #endif

@@ -90,7 +90,7 @@ int main()
             // if (index % 10 == 0)
             // tmp_collision_manager_optimize(&sim.collisions);
 
-            tmp_simulation_subtick(&sim, 0.1f);
+            tmp_simulation_subtick(&sim);
         },
         10'000'000, 1);
 }

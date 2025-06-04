@@ -6,25 +6,25 @@
 #include "nob.h"
 
 // #define DEBUG
-// #define RELEASE
-#define PROFILE
+#define RELEASE
+// #define PROFILE
 
-#define CLANG
-// #define GCC
+// #define CLANG
+#define GCC
 
-// #define PGO
+#define PGO
 #define BENCHMARK
+
+// #define COLLISION_MANAGER BRUTE_FORCE
+#define COLLISION_MANAGER HASH_GRID
+// #define COLLISION_MANAGER NAIVE_HASH_GRID
+// #define COLLISION_MANAGER QUADTREE
 
 #define BUILD_DIR "build/"
 #define SRC_DIR "src/"
 
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
-
-// #define COLLISION_MANAGER BRUTE_FORCE
-#define COLLISION_MANAGER HASH_GRID
-// #define COLLISION_MANAGER NAIVE_HASH_GRID
-// #define COLLISION_MANAGER QUADTREE
 
 #define BASE_FLAGS(X)                                                          \
     X("-Werror")                                                               \
@@ -46,7 +46,6 @@
 
 #define RELEASE_CFLAGS(X)                                                      \
     X("-O3")                                                                   \
-    X("-ffast-math")                                                           \
     X("-march=native")                                                         \
     X("-mtune=native")                                                         \
     X("-DNDEBUG")

@@ -2,6 +2,10 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <Const.h>
+
+#define TMP_DT (1.0f / TMP_SIMULATION_SUBTICKS)
+#define TMP_DT_SQ (TMP_DT * TMP_DT)
 
 #define TMP_THREAD_COUNT 8
 #define TMP_ROUND_UP(x, y) ((x + (y - 1)) / y)
