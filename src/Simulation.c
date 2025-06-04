@@ -17,22 +17,8 @@ void tmp_simulation_init(struct tmp_simulation *s) {
   s->current_id = 1;
   tmp_vector_grow(struct tmp_ball, s->balls);
   s->balls_end++;
-  // s->grid_entities = malloc(sizeof *s->grid_entities * TMP_BALL_COUNT);
   tmp_collision_manager_init(&s->collisions);
   s->collisions.sim = s;
-
-  // struct tmp_ball *a = tmp_simulation_ball_init(s);
-  // struct tmp_ball *b = tmp_simulation_ball_init(s);
-  // a->position.x = a->last_position.x = -200 + TMP_MAP_SIZE / 2;
-  // a->position.y = a->last_position.y = -0 + TMP_MAP_SIZE / 2;
-  // b->position.x = b->last_position.x = 200 + TMP_MAP_SIZE / 2;
-  // b->position.y = b->last_position.y = 0 + TMP_MAP_SIZE / 2;
-
-  // a->acceleration.x += 0;
-  // b->acceleration.x -= 20;
-
-  // tmp_spatial_hash_insert(&s->grid, a);
-  // tmp_spatial_hash_insert(&s->grid, b);
 
   for (uint64_t i = 1; i < TMP_BALL_COUNT; i++)
     tmp_simulation_ball_init(s);

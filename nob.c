@@ -1,11 +1,18 @@
+#include "cjson.h"
+#include <stdlib.h>
 #include <string.h>
 #define NOB_IMPLEMENTATION
+#include "cjson.c"
 #include "nob.h"
 
-#include "src/Utilities.h"
-
 // #define DEBUG
-#define RELEASE
+// #define RELEASE
+#define PROFILE
+
+#define CLANG
+// #define GCC
+
+// #define PGO
 #define BENCHMARK
 
 #define BUILD_DIR "build/"
@@ -13,50 +20,86 @@
 
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
-#define CONCAT(x, y) x##y
 
 // #define COLLISION_MANAGER BRUTE_FORCE
 #define COLLISION_MANAGER HASH_GRID
 // #define COLLISION_MANAGER NAIVE_HASH_GRID
 // #define COLLISION_MANAGER QUADTREE
 
-// clang-format off
 #define BASE_FLAGS(X)                                                          \
-  X("-Werror")                                                                   \
-  X("-Wall")                                                                     \
-  X("-Wextra")                                                                   \
-  X("-Wpedantic")                                                                \
-  X("-Wconversion")                                                              \
-  X("-Wno-empty-translation-unit")                                               \
-  X("-Wno-unused-function")                                                      \
-  X("-Wno-extra-semi")                                                           \
-  X("-Wno-gnu-empty-struct")                                                     \
-  X("-Wno-strict-prototypes")                                                    \
-  X("-Isrc")                                                                     \
-  X("-DTMP_USE_" STRINGIFY(COLLISION_MANAGER))
+    X("-Werror")                                                               \
+    X("-Wall")                                                                 \
+    X("-Wextra")                                                               \
+    X("-Wconversion")                                                          \
+    X("-Wno-empty-translation-unit")                                           \
+    X("-Wno-unused-function")                                                  \
+    X("-Wno-gnu-empty-struct")                                                 \
+    X("-Isrc")                                                                 \
+    X("-DTMP_USE_" STRINGIFY(COLLISION_MANAGER))
 
 #define BASE_CFLAGS(X)
 #define BASE_CCFLAGS(X) X("-std=c++20")
-// clang-format on
-#define BASE_LFLAGS "-lSDL3", "-lm", "-lGL"
+#define BASE_LFLAGS(X)                                                         \
+    X("-lSDL3")                                                                \
+    X("-lm")                                                                   \
+    X("-lGL")
 
 #define RELEASE_CFLAGS(X)                                                      \
-  X("-O3")                                                                     \
-  X("-ffast-math")                                                             \
-  X("-DNDEBUG")
+    X("-O3")                                                                   \
+    X("-ffast-math")                                                           \
+    X("-march=native")                                                         \
+    X("-mtune=native")                                                         \
+    X("-DNDEBUG")
 
-#define RELEASE_LFLAGS "-flto"
+#define RELEASE_LFLAGS(X) X("-flto")
 
-#define DEBUG_CFLAGS(X) X("-gdwarf-4") X("-DDEBUG")
+#ifdef GCC
+#define CC "gcc"
+#define CXX "g++"
+#define PROFILE_GENERATE_LFLAGS(X) X("-fprofile-generate")
+#define PROFILE_GENERATE_CFLAGS(X) X("-fprofile-generate")
+#define PROFILE_USE_LFLAGS(X) X("-fprofile-use")
+#define PROFILE_USE_CFLAGS(X) X("-fprofile-use")
+#endif
 
-#define PROFILE_CFLAGS "-gline-tables-only -fno-inline -O3 -DNDEBUG"
-
+#ifdef CLANG
 #define CC "clang"
 #define CXX "clang++"
+#define PROFILE_GENERATE_LFLAGS(X) X("-fprofile-instr-generate")
+#define PROFILE_GENERATE_CFLAGS(X) X("-fprofile-instr-generate")
+#define PROFILE_USE_LFLAGS(X) X("-fprofile-instr-use")
+#define PROFILE_USE_CFLAGS(X) X("-fprofile-instr-use")
+#endif
 
+#define DEBUG_CFLAGS(X)                                                        \
+    X("-g")                                                                    \
+    X("-DDEBUG")
+
+#define PROFILE_CFLAGS(X)                                                      \
+    X("-gline-tables-only")                                                    \
+    X("-fno-inline")                                                           \
+    X("-O3")                                                                   \
+    X("-DNDEBUG")
+
+#define CLANG_ONLY(...)
+#define GCC_ONLY(...)
 #define DEBUG_ONLY(...)
 #define RELEASE_ONLY(...)
+#define PGO_ONLY(...)
 #define PROFILE_ONLY(...)
+
+#ifdef CLANG
+#undef CLANG_ONLY
+#define CLANG_ONLY(...) __VA_ARGS__
+#endif
+#ifdef GCC
+#undef GCC_ONLY
+#define GCC_ONLY(...) __VA_ARGS__
+#endif
+#ifdef PGO
+#undef PGO_ONLY
+#define PGO_ONLY(...) __VA_ARGS__
+#endif
 
 #ifdef DEBUG
 #undef DEBUG_ONLY
@@ -73,142 +116,305 @@
 #define PROFILE_ONLY(...) __VA_ARGS__
 #endif
 
-char *str_replace(char *str, char find, char replace, uint64_t start_from) {
-  for (; start_from[str]; str++)
-    if (start_from[str] == find)
-      start_from[str] = replace;
-  return str;
-}
+struct compilation_target_file
+{
+    char const *name;
+    char const *suffix;
+};
 
-int write_to_file(const char *file_name, const char *contents) {
-  FILE *fp = fopen(file_name, "w");
-  size_t len = strlen(contents);
-  fwrite(contents, 1, len, fp);
-  fclose(fp);
-
-  return 0;
-}
-
-int main(int argc, char **argv) {
-  NOB_GO_REBUILD_URSELF(argc, argv);
-
-  char compile_commands_json[1000 * 1000] = {0};
-  strcat(compile_commands_json, "[\n");
-
-  if (!nob_mkdir_if_not_exists(BUILD_DIR))
-    return 1;
-
-  struct compilation_target {
-    char const *compiler;
-    char const *file;
-    tmp_vector_declare(char const *, flags);
-  };
-
-  tmp_vector_declare_zero(struct compilation_target, targets);
-  tmp_vector_declare_zero(char const *, objects);
-
-#define append_flag(flag)                                                      \
-  tmp_vector_grow(char const *, targets_end->flags);                           \
-  *targets_end->flags_end++ = flag;
-
-#define append_cc_src(src)                                                     \
-  tmp_vector_grow(struct compilation_target, targets);                         \
-  *targets_end = (struct compilation_target){.compiler = CXX, .file = (src)};  \
-  BASE_FLAGS(append_flag);                                                     \
-  BASE_CCFLAGS(append_flag);                                                   \
-  targets_end++;
-#define append_c_src(src)                                                      \
-  tmp_vector_grow(struct compilation_target, targets);                         \
-  *targets_end = (struct compilation_target){.compiler = CC, .file = (src)};   \
-  BASE_FLAGS(append_flag);                                                     \
-  BASE_CFLAGS(append_flag);                                                    \
-  targets_end++;
-
-  append_c_src("Collision/BruteForce.c");
-  append_c_src("Collision/Quadtree.c");
-  append_c_src("Collision/HashGrid.c");
-  append_c_src("Collision/NaiveHashGrid.c");
-  append_c_src("Ball.c");
-  append_c_src("Simulation.c");
-  append_c_src("Utilities.c");
-  append_c_src("Vector.c");
-  append_c_src("Window.c");
-
+struct compilation_target_file files[] = {
+    {"Collision/BruteForce", "c"},
+    {"Collision/Quadtree", "c"},
+    {"Collision/HashGrid", "c"},
+    {"Collision/NaiveHashGrid", "c"},
+    {"Ball", "c"},
+    {"Simulation", "c"},
+    {"Utilities", "c"},
+    {"Vector", "c"},
+    {"Window", "c"},
 #ifdef BENCHMARK
-  append_cc_src("Benchmark.cc");
+    {"Benchmark", "cc"},
 #else
-  append_c_src("Main.c");
+    {"Main", "c"},
 #endif
+};
 
-#undef append_flag
-#undef append_c_src
-#undef append_cc_srcs
+struct compilation_target
+{
+    struct compilation_target_file file;
+    char const *compiler;
+    cjson_vector_declare(char const *, flags);
+};
 
-  for (struct compilation_target *t = targets; t < targets_end; t++) {
+char *str_replace(char *str, char find, char replace, uint64_t start_from)
+{
+    for (; start_from[str]; str++)
+        if (start_from[str] == find)
+            start_from[str] = replace;
+    return str;
+}
+
+int write_to_file(const char *file_name, const char *contents)
+{
+    FILE *fp = fopen(file_name, "w");
+    size_t len = strlen(contents);
+    fwrite(contents, 1, len, fp);
+    fclose(fp);
+
+    return 0;
+}
+
+struct make_executable_options
+{
+    uint8_t profile_generate;
+    uint8_t profile_use;
+    uint8_t release;
+    uint8_t debug;
+    uint8_t profile;
+    uint8_t populate_compile_commands;
+};
+
+struct cjson_value compile_commands = {.type = cjson_value_type_array};
+
+int make_object(struct compilation_target *target)
+{
     Nob_Cmd cmd = {0};
-
     char source[1024] = SRC_DIR;
-    char output[1024] = BUILD_DIR;
+    char object[1024] = BUILD_DIR;
 
-    strcat(source, t->file);
-    strcat(output, t->file);
-    strcat(output, ".o");
-    str_replace(output, '/', '.', sizeof BUILD_DIR);
+    strcat(source, target->file.name);
+    strcat(source, ".");
+    strcat(source, target->file.suffix);
+    strcat(object, target->file.name);
+    strcat(object, ".o");
+    str_replace(object, '/', '.', sizeof BUILD_DIR);
 
-    nob_cmd_append(&cmd, t->compiler, "-c", "-o", output, source);
-    for (char const **flag = t->flags; flag < t->flags_end; flag++)
-      nob_cmd_append(&cmd, *flag);
+    nob_cmd_append(&cmd, target->compiler);
+    nob_cmd_append(&cmd, source, "-o", object, "-c");
 
-#define append_flag(flag) nob_cmd_append(&cmd, flag);
-    RELEASE_ONLY(RELEASE_CFLAGS(append_flag));
-    DEBUG_ONLY(DEBUG_CFLAGS(append_flag));
-#undef append_flag
-
+    for (char const **i = target->flags; i < target->flags_end; i++)
+        nob_cmd_append(&cmd, *i);
     if (!nob_cmd_run_sync(cmd))
-      return 1;
+        return 1;
+    return 0;
+}
 
-    tmp_vector_grow(char const *, objects);
-    *objects_end++ = strdup(output);
+// this is so ugly
+void append_object_to_compile_commands(struct compilation_target *target)
+{
+#define DIRECTORY_PATH "/home/paul/Documents/programming/physics"
+#define DIRECTORY DIRECTORY_PATH "/"
+    struct cjson_value *entry = calloc(1, sizeof *entry);
+    entry->type = cjson_value_type_object;
 
-    // compile_commands.json
-    char entry[1000 * 100] = {0};
-    strcat(entry, "    {\n"
-                  "        \"directory\": "
-                  "\"/home/paul/Documents/programming/physics\",\n"
-                  "        \"arguments\": [");
-    for (uint64_t j = 0; j < cmd.count; j++) {
-      strcat(entry, "\"");
-      strcat(entry, cmd.items[j]);
-      strcat(entry, "\"");
-      if (j != cmd.count - 1)
-        strcat(entry, ", ");
+    // directory
+    {
+        cjson_vector_grow(struct cjson_object_entry, entry->object.values);
+        memset(entry->object.values_end, 0, sizeof *entry->object.values);
+        entry->object.values_end->name = strdup("directory");
+        struct cjson_value *directory_value =
+            calloc(1, sizeof *directory_value);
+        directory_value->type = cjson_value_type_string;
+        directory_value->string.value = strdup(DIRECTORY_PATH);
+        entry->object.values_end++->value = directory_value;
     }
 
-    strcat(entry, "],\n");
-    strcat(entry, "        \"file\": \"");
-    strcat(entry, "/home/paul/Documents/programming/physics/src/");
-    strcat(entry, t->file);
-    strcat(entry, "\",\n");
+    // file
+    {
+        cjson_vector_grow(struct cjson_object_entry, entry->object.values);
+        memset(entry->object.values_end, 0, sizeof *entry->object.values);
+        entry->object.values_end->name = strdup("file");
+        struct cjson_value *file_value = calloc(1, sizeof *file_value);
+        file_value->type = cjson_value_type_string;
 
-    strcat(entry, "        \"output\": \"");
-    strcat(entry, "/home/paul/Documents/programming/physics/build/");
-    strcat(entry, output);
-    strcat(entry, "\"\n    }");
-    if (t != targets_end - 1)
-      strcat(entry, ",\n");
-    strcat(compile_commands_json, entry);
-  }
-  strcat(compile_commands_json, "\n]");
+        cjson_vector_declare_zero(char, file_name);
+        cjson_vector_reserve(char, strlen(DIRECTORY), file_name);
+        memcpy(file_name_end, DIRECTORY, strlen(DIRECTORY));
+        file_name_end += strlen(DIRECTORY);
 
-  // link
-  Nob_Cmd cmd = {0};
-  nob_cmd_append(&cmd, CXX);
-  for (char const **i = objects; i < objects_end; i++)
-    nob_cmd_append(&cmd, *i);
-  nob_cmd_append(&cmd, "-o", "main",
-                 BASE_LFLAGS RELEASE_ONLY(, RELEASE_LFLAGS));
-  if (!nob_cmd_run_sync(cmd))
-    return 1;
+        uint64_t file_name_len = strlen(target->file.name);
+        cjson_vector_reserve(char, file_name_len, file_name);
+        memcpy(file_name_end, target->file.name, file_name_len);
+        file_name_end += file_name_len;
 
-  write_to_file("compile_commands.json", compile_commands_json);
+        cjson_vector_grow(char, file_name);
+        *file_name_end++ = '.';
+
+        uint64_t file_suffix_len = strlen(target->file.suffix);
+        cjson_vector_reserve(char, file_suffix_len, file_name);
+        memcpy(file_name_end, target->file.suffix, file_suffix_len);
+        file_name_end += file_suffix_len;
+
+        cjson_vector_grow(char, file_name);
+        *file_name_end++ = 0;
+
+        file_value->string.value = file_name;
+        entry->object.values_end++->value = file_value;
+    }
+
+    // output
+    {
+        cjson_vector_grow(struct cjson_object_entry, entry->object.values);
+        memset(entry->object.values_end, 0, sizeof *entry->object.values);
+        entry->object.values_end->name = strdup("output");
+        struct cjson_value *output_value = calloc(1, sizeof *output_value);
+        output_value->type = cjson_value_type_string;
+
+        cjson_vector_declare_zero(char, output_name);
+        cjson_vector_reserve(char, strlen(DIRECTORY), output_name);
+        memcpy(output_name, DIRECTORY, strlen(DIRECTORY));
+        output_name_end += strlen(DIRECTORY);
+
+        uint64_t file_name_len = strlen(target->file.name);
+        cjson_vector_reserve(char, file_name_len, output_name);
+        memcpy(output_name_end, target->file.name, file_name_len);
+        output_name_end += file_name_len;
+
+        cjson_vector_grow(char, output_name);
+        *output_name_end++ = '.';
+        cjson_vector_grow(char, output_name);
+        *output_name_end++ = 'o';
+        cjson_vector_grow(char, output_name);
+        *output_name_end++ = 0;
+
+        str_replace(output_name, '/', '.', sizeof DIRECTORY BUILD_DIR);
+
+        output_value->string.value = output_name;
+        entry->object.values_end++->value = output_value;
+    }
+
+    // arguments
+    {
+        cjson_vector_grow(struct cjson_object_entry, entry->object.values);
+        memset(entry->object.values_end, 0, sizeof *entry->object.values);
+        entry->object.values_end->name = strdup("arguments");
+        struct cjson_value *arguments_value =
+            calloc(1, sizeof *arguments_value);
+        arguments_value->type = cjson_value_type_array;
+
+        for (char const **i = target->flags; i < target->flags_end; i++)
+        {
+            struct cjson_value *argument_value =
+                calloc(1, sizeof *argument_value);
+            argument_value->type = cjson_value_type_string;
+            argument_value->string.value = *i;
+            cjson_vector_grow(struct cjson_value *,
+                              arguments_value->array.values);
+            *arguments_value->array.values_end++ = argument_value;
+        }
+        entry->object.values_end++->value = arguments_value;
+    }
+#undef DIRECTORY
+#undef DIRECTORY_SLASH
+
+    cjson_vector_grow(struct cjson_value *, compile_commands.array.values);
+    *compile_commands.array.values_end++ = entry;
+}
+
+int make_executable(struct make_executable_options *options)
+{
+    for (uint64_t i = 0; i < NOB_ARRAY_LEN(files); i++)
+    {
+        struct compilation_target target = {0};
+        target.compiler = CC;
+        target.file = files[i];
+#define append_flag(flag)                                                      \
+    cjson_vector_grow(char const *, target.flags);                             \
+    *target.flags_end++ = flag;
+
+        BASE_FLAGS(append_flag);
+        if (options->release)
+        {
+            RELEASE_CFLAGS(append_flag);
+        }
+        if (options->debug)
+        {
+            DEBUG_CFLAGS(append_flag);
+        }
+        if (options->profile_use)
+        {
+            PROFILE_USE_CFLAGS(append_flag);
+        }
+        if (options->profile_generate)
+        {
+            PROFILE_GENERATE_CFLAGS(append_flag);
+        }
+        if (options->profile_use)
+        {
+            PROFILE_USE_CFLAGS(append_flag);
+        }
+        if (options->profile)
+        {
+            PROFILE_CFLAGS(append_flag);
+        }
+#undef append_flag
+        if (options->populate_compile_commands)
+            append_object_to_compile_commands(&target);
+        if (make_object(&target))
+            return 1;
+    }
+
+    if (options->populate_compile_commands)
+        write_to_file("compile_commands.json",
+                      cjson_value_stringify(&compile_commands));
+
+    // link
+    Nob_Cmd cmd = {0};
+    nob_cmd_append(&cmd, CXX, "-o", "main");
+
+    for (uint64_t i = 0; i < NOB_ARRAY_LEN(files); i++)
+    {
+        char object[1024] = BUILD_DIR;
+        strcat(object, files[i].name);
+        strcat(object, ".o");
+        str_replace(object, '/', '.', sizeof BUILD_DIR);
+        nob_cmd_append(&cmd, strdup(object));
+    }
+
+#define append_flag(flag) nob_cmd_append(&cmd, flag);
+
+    BASE_LFLAGS(append_flag);
+    if (options->release)
+    {
+        RELEASE_LFLAGS(append_flag);
+    }
+    if (options->profile_generate)
+    {
+        PROFILE_GENERATE_LFLAGS(append_flag);
+    }
+    if (options->profile_use)
+    {
+        PROFILE_USE_LFLAGS(append_flag);
+    }
+#undef append_flag
+    if (!nob_cmd_run_sync(cmd))
+        return 1;
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    NOB_GO_REBUILD_URSELF(argc, argv);
+
+    struct make_executable_options options = {0};
+    options.populate_compile_commands = 1;
+    DEBUG_ONLY(options.debug = 1);
+    RELEASE_ONLY(options.release = 1);
+    PGO_ONLY(options.profile_generate = 1);
+    PROFILE_ONLY(options.profile = 1);
+
+    if (make_executable(&options))
+        return 1;
+
+    if (options.profile_generate)
+    {
+        system("./main");
+        CLANG_ONLY(system(
+            "llvm-profdata merge -output=default.profdata default.profraw"));
+        options.populate_compile_commands = 0;
+        options.profile_generate = 0;
+        options.profile_use = 1;
+        if (make_executable(&options))
+            return 1;
+    }
 }

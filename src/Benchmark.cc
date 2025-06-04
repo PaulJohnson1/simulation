@@ -10,7 +10,7 @@ uint64_t get_us_from_timeval(struct timeval x)
 }
 
 template <typename T>
-void benchmark(std::string label, T x, uint64_t time_useconds)
+void benchmark(std::string label, T x, uint64_t time_useconds, int verbose)
 {
     (void)label;
     int64_t next_batch_size = 1;
@@ -20,10 +20,13 @@ void benchmark(std::string label, T x, uint64_t time_useconds)
     gettimeofday(&benchmark_start_timeval, NULL);
     uint64_t benchmark_start = get_us_from_timeval(benchmark_start_timeval);
     uint64_t benchmark_end = benchmark_start + time_useconds;
+    uint64_t batches = 0;
 
     while (true)
     {
-        printf("running batch of size:\t%" PRIu64, next_batch_size);
+        batches++;
+        if (verbose)
+            printf("running batch of size:\t%" PRIu64, next_batch_size);
         fflush(stdout);
         struct timeval start;
         gettimeofday(&start, NULL);
@@ -37,14 +40,19 @@ void benchmark(std::string label, T x, uint64_t time_useconds)
 
         uint64_t time_elapsed =
             get_us_from_timeval(end) - get_us_from_timeval(start);
-        printf(": took %" PRIu64 " us\n", time_elapsed);
+        if (verbose)
+            printf(": took %" PRIu64 " us\n", time_elapsed);
+        if (time_elapsed == 0)
+            time_elapsed = 1;
         int64_t time_remaining =
             (int64_t)benchmark_end - (int64_t)get_us_from_timeval(end);
         // prevent divide by 0
         if (next_batch_size == 0)
             break;
+
         next_batch_size =
-            time_remaining / ((int64_t)time_elapsed / next_batch_size);
+            time_remaining /
+            (((int64_t)time_elapsed + next_batch_size - 1) / next_batch_size);
         next_batch_size -= next_batch_size / 5;
         if (time_remaining < 0 || next_batch_size == 0)
             break;
@@ -57,10 +65,11 @@ void benchmark(std::string label, T x, uint64_t time_useconds)
 
     printf("results: \n"
            "\titerations: %lu\n"
+           "\tbatches:\t%lu\n"
            "\ttime:\t%lu\n"
            "\tus/op:\t%.3f\n"
            "\tops/ms:\t%.3f\n",
-           total_iterations, benchmark_time_elapsed,
+           total_iterations, batches, benchmark_time_elapsed,
            (float)benchmark_time_elapsed / (float)total_iterations,
            (float)total_iterations / ((float)benchmark_time_elapsed / 1'000));
 }
@@ -83,5 +92,5 @@ int main()
 
             tmp_simulation_subtick(&sim, 0.1f);
         },
-        60'000'000);
+        10'000'000, 1);
 }

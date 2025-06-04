@@ -19,17 +19,21 @@ float tmp_fast_inverse_root(float x)
 {
     int32_t i;
     float x2;
-    float y;
+    union {
+        float f;
+        uint32_t u32;
+        int32_t i32;
+    } y;
 
     x2 = x * 0.5f;
-    y = x;
+    y.f = x;
     i = *(int32_t *)&y;
     i = 0x5f3759df - (i >> 1);
-    y = *(float *)&i;
-    y *= (1.5f - (x2 * y * y));
-    // y *= (1.5f - (x2 * y * y));
+    y.i32 = i;
+    y.f *= (1.5f - (x2 * y.f * y.f));
+    // y.f *= (1.5f - (x2 * y.f * y.f));
 
-    return y;
+    return y.f;
 }
 
 #define TRIG_LOOKUP_SIZE 8192

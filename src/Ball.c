@@ -9,7 +9,7 @@
 
 void tmp_ball_apply_gravity(struct tmp_ball *b)
 {
-    // b->acceleration.y -= 0.001f;
+    // b->acceleration.y -= 0.01f;
 
     static uint64_t r = 1;
     r ^= r >> 12;
@@ -88,7 +88,7 @@ static void draw_circle(float x, float y, float radius) {
     }
 
     // Transform unit circle to final position/size
-    float final_vertices[35];
+    float final_vertices[36];
     final_vertices[0] = x;
     final_vertices[1] = y;
     for (int i = 1; i <= segments + 1; i++) {
