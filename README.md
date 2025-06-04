@@ -1,5 +1,5 @@
 # High performance simulation
-Handles 20,000 balls at 0.9 milliseconds per tick on my cpu: `AMD FX-6300 (6) @ 3.500GHz`
+Handles 20,000 balls at 0.687 milliseconds per tick on my cpu: `Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz`
 
 ## Buliding
 to compile: `cc nob.c && ./a.out`
