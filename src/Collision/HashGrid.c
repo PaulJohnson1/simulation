@@ -170,12 +170,6 @@ void tmp_spatial_hash_find_possible_collisions_single(
         for (uint32_t j = g->cells[h]; j; j = g->references->nexts[j])         \
             cb(id_a, g->references->datas[j], captures);                       \
     } while (0)
-#define prefetch(h)                                                            \
-    do                                                                         \
-    {                                                                          \
-        __builtin_prefetch(g->references->nexts + (h), 0, 0);                  \
-        __builtin_prefetch(g->references->datas + (h), 0, 0);                  \
-    } while (0)
 
     uint64_t const end = TMP_SPATIAL_HASH_CELL_COUNT_AXIS;
     for (uint64_t y = 0; y < end; y++)
